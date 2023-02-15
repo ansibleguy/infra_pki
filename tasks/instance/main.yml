@@ -1,0 +1,17 @@
+---
+
+- name: "PKI | Instance '{{ pki_name }}' | Checking config"
+  ansible.builtin.assert:
+    that:
+      - pki is defined
+      - PKI.instances is defined
+      - PKI.instances | length > 0
+
+- name: "PKI | Instance '{{ pki_name }}' | Checking if PKI is initialized"
+  ansible.builtin.stat:
+    path: "{{ pki_path }}/ca.crt"
+  register: pki_init
+
+- name: "PKI | Instance '{{ pki_name }}' | Initializing"
+  ansible.builtin.include_tasks: init.yml
+  when: not pki_init.stat.exists

@@ -21,21 +21,21 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: test-ag-ROLE-tester
+  - name: test-ag-infra_pki-tester
     docker_networks:
-      - name: 'test-ag-ROLE'
+      - name: 'test-ag-infra_pki'
         ipam_config:
           - subnet: '192.168.N.0/24'
             gateway: '192.168.N.254'
     networks:
-      - name: 'test-ag-ROLE'
+      - name: 'test-ag-infra_pki'
         ipv4_address: '192.168.N.1'
     groups: [grp_tester]
     <<: *docker_all
 
-  - name: test-ag-ROLE-1
+  - name: test-ag-infra_pki-1
     networks:
-      - name: 'test-ag-ROLE'
+      - name: 'test-ag-infra_pki'
         ipv4_address: '192.168.N.2'
     groups: [grp_targets]
     <<: *docker_all

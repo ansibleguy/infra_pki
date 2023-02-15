@@ -4,8 +4,18 @@ no_prompts: false
 debug: false
 
 # default config => is overwritten by provided config
-defaults_app: {}
+defaults_pki:
+  easyrsa_version: '3.1.2'
+  manage:
+    users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
+  instances: {}
 
-APP_CONFIG: "{{ defaults_app | combine(app, recursive=true) }}"
+PKI: "{{ defaults_pki | combine(pki, recursive=true) }}"
 
-defaults_instance: {}
+defaults_instance:
+  path_base: '/var/lib/pki'
+  owner: 'pki'
+  group: 'pki'
+  group_read: 'pki_read'
+
+PKI_SCRIPT: "{{ PKI_HC.easyrsa.path.script }}/easyrsa"

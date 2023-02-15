@@ -1,0 +1,39 @@
+---
+
+- name: PKI | EasyRSA | Checking if EasyRSA is downloaded
+  ansible.builtin.stat:
+    path: "{{ path_tmpl }}"
+  register: pki_easyrsa_tmpl
+
+- name: PKI | EasyRSA | Adding EasyRSA directory
+  ansible.builtin.file:
+    path: "{{ path_tmpl }}"
+    state: directory
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+  when: not pki_easyrsa_tmpl.stat.exists
+
+- name: PKI | EasyRSA | Downloading EasyRSA
+  ansible.builtin.unarchive:
+    src: "{{ PKI_HC.easyrsa_dl }}/v{{ PKI.easyrsa_version }}/EasyRSA-{{ PKI.easyrsa_version }}.tgz"
+    remote_src: true
+    dest: "{{ path_tmpl }}"
+  when: not pki_easyrsa_tmpl.stat.exists
+
+- name: PKI | EasyRSA | Checking EasyRSA version
+  ansible.builtin.command: "{{ PKI_SCRIPT }} --version"
+  register: pki_easyrsa_version
+  when: pki_easyrsa_tmpl.stat.exists
+
+- name: PKI | EasyRSA | Copying script if needed
+  ansible.builtin.copy:
+    src: "{{ path_tmpl }}/easyrsa"
+    remote_src: true
+    dest: "{{ PKI_SCRIPT }}"
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+  when: >
+    not pki_easyrsa_tmpl.stat.exists or
+    PKI.easyrsa_version not in pki_easyrsa_version.stdout

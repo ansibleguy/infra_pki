@@ -1,3 +1,8 @@
 ---
 
-
+PKI_HC:
+  easyrsa:
+    path:
+      script: '/usr/local/sbin'
+      template: '/var/lib/easyrsa_template'  # version number appended
+    dl: 'https://github.com/OpenVPN/easy-rsa/releases/download/v'
