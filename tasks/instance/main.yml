@@ -1,17 +1,45 @@
 ---
 
-- name: "PKI | Instance '{{ pki_name }}' | Checking config"
+- name: "{{ task_prefix_pki }} | Checking config"
   ansible.builtin.assert:
     that:
-      - pki is defined
-      - PKI.instances is defined
-      - PKI.instances | length > 0
+      - pki_cnf.sub_cas is defined
+      - pki_cnf.sub_cas | length > 0
 
-- name: "PKI | Instance '{{ pki_name }}' | Checking if PKI is initialized"
+- name: "{{ task_prefix_pki }} | Validating vars"
+  ansible.builtin.include_tasks: validate_vars.yml
+  vars:
+    check_vars: "{{ pki_vars_ca }}"
+    check_task_prefix: "{{ task_prefix_pki }}"
+
+- name: "{{ task_prefix_pki }} | Checking if CA is initialized"
   ansible.builtin.stat:
-    path: "{{ pki_path }}/ca.crt"
+    path: "{{ pki_path_ca }}/ca.crt"
   register: pki_init
 
-- name: "PKI | Instance '{{ pki_name }}' | Initializing"
-  ansible.builtin.include_tasks: init.yml
+- name: "{{ task_prefix_pki }} | Initializing CA"
+  ansible.builtin.include_tasks: init_ca.yml
   when: not pki_init.stat.exists
+
+- name: "{{ task_prefix_pki }} | Updating config"
+  ansible.builtin.template:
+    src: 'templates/var/lib/pki/instance/vars.j2'
+    dest: "{{ pki_path_ca }}/vars"
+    mode: 0640
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+  vars:
+    easyrsa_vars: "{{ pki_vars_ca }}"
+    easyrsa_base: "{{ pki_path_ca }}"
+
+- name: "{{ task_prefix_pki }} | Processing SubCA's"
+  ansible.builtin.include_tasks: subca.yml
+  vars:
+    pki_name_subca: "{{ pki_subca_item.key | safe_key }}"
+    pki_cnf_subca: "{{ defaults_subca | combine(pki_subca_item.value, recursive=true) }}"
+    pki_vars_subca: "{{ pki_vars_ca | combine(pki_cnf_subca.vars, recursive=true) }}"
+    pki_path_subca: "{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
+    task_prefix_subca: "{{ task_prefix_pki }} | SubCA '{{ pki_name_subca }}'"
+  loop_control:
+    loop_var: pki_subca_item
+  with_dict: "{{ pki_cnf.sub_cas }}"

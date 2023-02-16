@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+# basics
+
+set_var EASYRSA "{{ PKI_SCRIPT | dirname }}"
+set_var EASYRSA_PKI "{{ easyrsa_base }}"
+set_var EASYRSA_EXT_DIR "$EASYRSA_PKI/x509-types"
+set_var EASYRSA_SSL_CONF "$EASYRSA/openssl-easyrsa.cnf"
+
+# variables
+
+{% for var, value in easyrsa_vars %}
+{%   if var not in PKI_HC.easyrsa.vars_ignore and value not in PKI_HC.none_values %}
+set_var EASYRSA_{{ var | upper }} {{ value }}
+{%   endif %}
+{% endfor %}

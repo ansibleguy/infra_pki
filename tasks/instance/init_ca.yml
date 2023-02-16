@@ -1,0 +1,64 @@
+---
+
+- name: "{{ task_prefix_pki }} | Init-CA | Getting CA password"
+  ansible.builtin.include_tasks: pwd_ca.yml
+
+- name: "{{ task_prefix_pki }} | Init-CA | Adding CA-Owner"
+  ansible.builtin.user:
+    name: "{{ pki_cnf.owner }}"
+    shell: '/bin/bash'
+    comment: 'ansibleguy.infra_pki - owner of CA/PKI'
+    state: present
+  when: PKI.manage.users
+
+- name: "{{ task_prefix_pki }} | Init-CA | Adding CA-Groups"
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop: ["{{ pki_cnf.group }}", "{{ pki_cnf.group_read }}"]
+  when: PKI.manage.users
+
+- name: "{{ task_prefix_pki }} | Init-CA | Adding directory"
+  ansible.builtin.file:
+    path: "{{ pki_path_ca }}"
+    state: directory
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+    mode: 0750
+
+- name: "{{ task_prefix_pki }} | Init-CA | Initializing"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} init-pki"
+    responses:
+      Question:
+        - 'yes'  # existing directory
+        - 'yes'  # remove existing vars
+  args:
+    chdir: "{{ pki_path_base }}"
+  environment:
+    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+
+- name: "{{ task_prefix_pki }} | Init-CA | Copying config"
+  ansible.builtin.template:
+    src: 'templates/var/lib/pki/instance/vars.j2'
+    dest: "{{ pki_path_ca }}/vars"
+    mode: 0640
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+  vars:
+    easyrsa_vars: "{{ pki_vars_ca }}"
+    easyrsa_base: "{{ pki_path_ca }}"
+
+- name: "{{ task_prefix_pki }} | Init-CA | Generating CA"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} build-ca"
+    responses:
+      Question:
+        - "{{ pki_ca_pwd }}"
+        - "{{ pki_ca_pwd }}"
+        - "{{ pki_cnf.ca_cn }}"
+  args:
+    chdir: "{{ pki_path_base }}"
+  environment:
+    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+  no_log: true

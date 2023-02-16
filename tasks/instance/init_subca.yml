@@ -1,0 +1,107 @@
+---
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Checking if CA-key is available"
+  ansible.builtin.stat:
+    path: "{{ pki_path_ca }}/private/ca.key"
+  register: pki_subca_cakey
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Fail if CA-key is not available"
+  ansible.builtin.fail:
+    msg: "The CA-key '{{ pki_path_ca }}/private/ca.key' could not be found!
+    It is needed to initialize a new Sub-CA!"
+  when: not pki_subca_cakey.stat.exists
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Getting CA password"
+  ansible.builtin.include_tasks: pwd_ca.yml
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Checking if SubCA-password was provided"
+  ansible.builtin.set_fact:
+    pki_subca_pwd: "{{ pki_subca_cnf.pwd }}"
+  when: "pki_cnf.pwd not in [none, '', ' ']"
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Prompting for SubCA-password"
+  ansible.builtin.pause:
+    prompt: "No CA password was provided! Please input one! MAKE SURE TO SAVE THIS PASSWORD!!"
+    echo: false
+  register: pki_subca_pwd_raw
+  when: pki_subca_pwd is undefined
+  delegate_to: localhost
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Setting CA-password"
+  ansible.builtin.set_fact:
+    pki_subca_pwd: "{{ hostvars['localhost'].pki_subca_pwd_raw.user_input }}"
+  when: pki_subca_pwd is undefined
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Adding directory"
+  ansible.builtin.file:
+    path: "{{ pki_path_subca }}"
+    state: directory
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+    mode: 0750
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Initializing"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} init-pki"
+    responses:
+      Question:
+        - 'yes'  # existing directory
+        - 'yes'  # remove existing vars
+  args:
+    chdir: "{{ pki_path_base }}"
+  environment:
+    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Copying config"
+  ansible.builtin.template:
+    src: 'templates/var/lib/pki/instance/vars.j2'
+    dest: "{{ pki_path_subca }}/vars"
+    mode: 0640
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+  vars:
+    easyrsa_vars: "{{ pki_vars_subca }}"
+    easyrsa_base: "{{ pki_path_subca }}"
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Generating SubCA"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} build-ca subca"
+    responses:
+      Question:
+        - "{{ pki_subca_pwd }}"
+        - "{{ pki_subca_pwd }}"
+        - "{{ pki_cnf_subca.ca_cn }}"
+  args:
+    chdir: "{{ pki_path_base }}"
+  environment:
+    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+  no_log: true
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Importing SubCA request into CA"
+  ansible.builtin.command: "{{ PKI_SCRIPT }} import-req {{ pki_path_subca }}/reqs/ca.req subca_{{ pki_name_subca }}"
+  args:
+    chdir: "{{ pki_path_base }}"
+  environment:
+    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Signing SubCA via CA"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} sign-req ca subca_{{ pki_name_subca }}"
+    responses:
+      Question:
+        - 'yes'
+        - "{{ pki_ca_pwd }}"
+  args:
+    chdir: "{{ pki_path_base }}"
+  environment:
+    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+  no_log: true
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Copying signed SubCA certificate"
+  ansible.builtin.copy:
+    src: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}"
+    remote_src: true
+    dest: "{{ pki_path_subca }}/ca.crt"
+    mode: 0644
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"

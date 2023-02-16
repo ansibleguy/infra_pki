@@ -6,6 +6,7 @@ debug: false
 # default config => is overwritten by provided config
 defaults_pki:
   easyrsa_version: '3.1.2'
+  vars: {}
   manage:
     users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
   instances: {}
@@ -13,9 +14,45 @@ defaults_pki:
 PKI: "{{ defaults_pki | combine(pki, recursive=true) }}"
 
 defaults_instance:
+  ca_cn: 'Auto-Generated CA'
   path_base: '/var/lib/pki'
   owner: 'pki'
   group: 'pki'
-  group_read: 'pki_read'
+  group_read: 'pki_read'  # for monitoring and so on
+  pwd:
+
+
+defaults_vars:
+  # if value is set to {none}, 'none', '' or ' ' the variable will be ignored
+  #   easyrsa-defaults will be used instead
+  req_country: 'AT'
+  req_province: 'Styria'
+  req_city: ''
+  req_org: 'AnsibleGuy'
+  req_email: ''
+  req_ou: ''
+
+  key_size: 4096  # 1024, 2048, 4096, 8192
+  algo: 'rsa'  # rsa, ec, ed
+  digest: 'sha256'  # md5, sha1, sha256, sha224, sha384, sha512
+  curve: 'secp384r1'
+
+  ca_expire: 7300  # 20 years
+  cert_expire: 1095  # 3 years
+  crl_days: 180
+  cert_renew: 90
+
+  dn: 'cn_only'  # cn_only, org
+  rand_sn: 'yes'
+  fix_offset:  # 1-365
+  ns_support: 'no'
+  ns_comment: 'Auto-Generated Certificate'
+
+  # will be ignored: 'no_pass', 'temp_dir', 'ext_dir', 'ssl_conf', 'batch'
+
+defaults_subca:
+  ca_cn: 'Auto-Generated Sub-CA'
+  pwd:
 
 PKI_SCRIPT: "{{ PKI_HC.easyrsa.path.script }}/easyrsa"
+PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}_{{ PKI.easyrsa_version }}"

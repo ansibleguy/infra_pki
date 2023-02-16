@@ -2,12 +2,12 @@
 
 - name: PKI | EasyRSA | Checking if EasyRSA is downloaded
   ansible.builtin.stat:
-    path: "{{ path_tmpl }}"
+    path: "{{ PKI_TMPL }}"
   register: pki_easyrsa_tmpl
 
 - name: PKI | EasyRSA | Adding EasyRSA directory
   ansible.builtin.file:
-    path: "{{ path_tmpl }}"
+    path: "{{ PKI_TMPL }}"
     state: directory
     owner: 'root'
     group: 'root'
@@ -18,22 +18,46 @@
   ansible.builtin.unarchive:
     src: "{{ PKI_HC.easyrsa_dl }}/v{{ PKI.easyrsa_version }}/EasyRSA-{{ PKI.easyrsa_version }}.tgz"
     remote_src: true
-    dest: "{{ path_tmpl }}"
+    dest: "{{ PKI_TMPL }}"
+  register: pki_easyrsa_tmpl
   when: not pki_easyrsa_tmpl.stat.exists
 
 - name: PKI | EasyRSA | Checking EasyRSA version
   ansible.builtin.command: "{{ PKI_SCRIPT }} --version"
   register: pki_easyrsa_version
-  when: pki_easyrsa_tmpl.stat.exists
+  when: not pki_easyrsa_tmpl.changed
 
 - name: PKI | EasyRSA | Copying script if needed
   ansible.builtin.copy:
-    src: "{{ path_tmpl }}/easyrsa"
+    src: "{{ PKI_TMPL }}/easyrsa"
     remote_src: true
     dest: "{{ PKI_SCRIPT }}"
     owner: 'root'
     group: 'root'
     mode: 0755
+  register: pki_easyrsa_script
   when: >
-    not pki_easyrsa_tmpl.stat.exists or
+    pki_easyrsa_tmpl.changed or
     PKI.easyrsa_version not in pki_easyrsa_version.stdout
+
+- name: PKI | EasyRSA | Copying config if needed
+  ansible.builtin.copy:
+    src: "{{ PKI_TMPL }}/openssl-easyrsa.cnf"
+    remote_src: true
+    dest: "{{ PKI_SCRIPT }}"
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+  when: pki_easyrsa_script.changed
+
+- name: PKI | EasyRSA | Removing unnecessary files from template
+  ansible.builtin.file:
+    state: absent
+    path: "{{ PKI_TMPL }}/{{ item }}"
+  diff: false
+  ignore_errors: true
+  loop: [
+    'doc', 'ChangeLog', 'mktemp.txt', 'README.md', 'README.quickstart.md',
+    'vars.example', 'easyrsa', 'openssl-easyrsa.cnf',
+  ]
+  when: pki_easyrsa_tmpl.changed

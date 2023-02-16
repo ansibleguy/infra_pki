@@ -1,0 +1,19 @@
+---
+
+- name: "{{ task_prefix_pki }} | PWD-CA | Checking if CA-password was provided"
+  ansible.builtin.set_fact:
+    pki_ca_pwd: "{{ pki_cnf.pwd }}"
+  when: "pki_cnf.pwd not in [none, '', ' ']"
+
+- name: "{{ task_prefix_pki }} | PWD-CA | Prompting for CA-password"
+  ansible.builtin.pause:
+    prompt: "No CA password was provided! Please input one! MAKE SURE TO SAVE THIS PASSWORD!!"
+    echo: false
+  register: pki_ca_pwd_raw
+  when: pki_ca_pwd is undefined
+  delegate_to: localhost
+
+- name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password"
+  ansible.builtin.set_fact:
+    pki_ca_pwd: "{{ hostvars['localhost'].pki_ca_pwd_raw.user_input }}"
+  when: pki_ca_pwd is undefined

@@ -1,0 +1,8 @@
+---
+
+- name: "{{ check_task_prefix }} | Validating vars"
+  ansible.builtin.assert:
+    that:
+      - check_vars.key_size | str in PKI_HC.options.key_size
+      - check_vars.algo in PKI_HC.options.algo
+      - check_vars.digest in PKI_HC.options.digest
