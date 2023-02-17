@@ -8,7 +8,7 @@
 
 - name: "{{ task_prefix_subca }} | Checking if SubCA is initialized"
   ansible.builtin.stat:
-    path: "{{ pki_path_subca }}/ca.crt"
+    path: "{{ pki_path_subca }}/{{ PKI_HC.file.ca }}"
   register: pki_subca_init
 
 - name: "{{ task_prefix_subca }} | Initializing SubCA"
@@ -19,3 +19,5 @@
   ansible.builtin.include_tasks: update_privileges.yml
   vars:
     easyrsa_base: "{{ pki_path_subca }}"
+    privilege_task_prefix: "{{ task_prefix_subca }}"
+

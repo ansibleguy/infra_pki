@@ -12,6 +12,20 @@ PKI_HC:
       - 'ssl_conf'
       - 'batch'
       - 'pki'
+    privileges:
+      public:
+        dirs: ['issued', 'certs_by_serial']
+        files: ['ca.crt', 'crl.pem']
+      private:
+        dirs: ['private', 'revoked', 'reqs']
+        files:
+          - 'serial'
+          - 'serial.old'
+          - 'vars'
+          - 'index.txt'
+          - 'index.txt.old'
+          - 'index.txt.attr'
+          - 'index.txt.attr.old'
 
   dir:
     prefix_subca: 'subca_'
@@ -23,6 +37,8 @@ PKI_HC:
 
   file:
     pwd: '.ca.pwd'
+    crl: 'crl.pem'
+    ca: 'ca.crt'
 
 
   requirements: ['python3-pexpect']

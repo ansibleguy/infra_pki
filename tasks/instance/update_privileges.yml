@@ -1,3 +1,68 @@
 ---
 
-# todo: update owner/mode of all important files/directories to make sure those are consistent
+- name: "{{ privilege_task_prefix }} | Setting privileges on public directories"
+  ansible.builtin.file:
+    path: "{{ easyrsa_base }}/{{ item }}"
+    state: directory
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+    mode: 0755
+  loop: "{{ PKI_HC.easyrsa.privileges.public.dirs + [''] }}"
+
+- name: "{{ privilege_task_prefix }} | Setting privileges on public files"
+  ansible.builtin.file:
+    path: "{{ easyrsa_base }}/{{ item }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group_read }}"
+    mode: "{{ PKI.mode_public }}"
+  loop: "{{ PKI_HC.easyrsa.privileges.public.files }}"
+
+- name: "{{ privilege_task_prefix }} | Setting privileges on public directory content"
+  ansible.builtin.command: "chmod {{ PKI.mode_public }} {{ easyrsa_base }}/{{ item }}/*"
+  loop: "{{ PKI_HC.easyrsa.privileges.public.dirs }}"
+
+- name: "{{ privilege_task_prefix }} | Setting ownership on public directory content"
+  ansible.builtin.command: "chown {{ pki_cnf.owner }}:{{ pki_cnf.group_read }} {{ easyrsa_base }}/{{ item }}/*"
+  loop: "{{ PKI_HC.easyrsa.privileges.public.dirs }}"
+
+- name: "{{ privilege_task_prefix }} | Setting privileges on private directories"
+  ansible.builtin.file:
+    path: "{{ easyrsa_base }}/{{ item }}"
+    state: directory
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+    mode: 0750
+  loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
+
+- name: "{{ privilege_task_prefix }} | Setting privileges on private files"
+  ansible.builtin.file:
+    path: "{{ easyrsa_base }}/{{ item }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+    mode: 0640
+  loop: "{{ PKI_HC.easyrsa.privileges.private.files }}"
+
+- name: "{{ privilege_task_prefix }} | Setting privileges on private directory content"
+  ansible.builtin.command: "chmod 640 {{ easyrsa_base }}/{{ item }}/*"
+  loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
+
+- name: "{{ privilege_task_prefix }} | Setting ownership on private directory content"
+  ansible.builtin.command: "chown {{ pki_cnf.owner }}:{{ pki_cnf.owner }} {{ easyrsa_base }}/{{ item }}/*"
+  loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
+
+- name: "{{ privilege_task_prefix }} | Setting privileges on password file"
+  ansible.builtin.file:
+    path: "{{ easyrsa_base }}/{{ PKI_HC.file.pwd }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+    owner: 'root'
+    group: 'root'
+    mode: 0400
+  when: PKI.save_passwords | bool

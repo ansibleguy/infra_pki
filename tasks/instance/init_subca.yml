@@ -41,7 +41,7 @@
     dest: "{{ pki_path_subca }}/vars"
     mode: 0640
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.group_read }}"
+    group: "{{ pki_cnf.owner }}"
   vars:
     easyrsa_vars: "{{ pki_vars_subca }}"
     easyrsa_base: "{{ pki_path_subca }}"
@@ -78,8 +78,8 @@
   ansible.builtin.copy:
     src: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}"
     remote_src: true
-    dest: "{{ pki_path_subca }}/ca.crt"
-    mode: 0644
+    dest: "{{ pki_path_subca }}/{{ PKI_HC.file.ca }}"
+    mode: "{{ PKI.mode_public }}"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.group_read }}"
 

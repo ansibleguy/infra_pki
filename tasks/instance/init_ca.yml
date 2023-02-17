@@ -42,7 +42,7 @@
     dest: "{{ pki_path_ca }}/vars"
     mode: 0640
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.group_read }}"
+    group: "{{ pki_cnf.owner }}"
   vars:
     easyrsa_vars: "{{ pki_vars_ca }}"
     easyrsa_base: "{{ pki_path_ca }}"

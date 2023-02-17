@@ -8,17 +8,18 @@
 EASYRSA="{{ PKI_SCRIPT }}"
 OWNER="{{ pki_cnf.owner }}"
 GROUP="{{ pki_cnf.group_read }}"
-PWD_FILE="{{ PKI_HC.file.pwd }}"
+FILE_PWD="{{ PKI_HC.file.pwd }}"
+FILE_CRL="{{ PKI_HC.file.crl }}"
 
 function gen_crl {
   path_pki="$1"
   ca_key="$path_pki/private/ca.key"
-  ca_pwd_file="$path_pki/$PWD_FILE"
+  ca_pwd_file="$path_pki/$FILE_PWD"
   if [ -f "$pki_ca_key" ]
   then
     EASYRSA_PKI="$path_pki" $EASYRSA --passin=file:"$ca_pwd_file" gen-crl
-    chown "$OWNER":"$GROUP" "$path_pki/crl.pem"
-    cmod 644 "$path_pki/crl.pem"
+    chown "$OWNER":"$GROUP" "$path_pki/$FILE_CRL"
+    cmod 644 "$path_pki/$FILE_CRL"
   else
     echo "CA-key '$pki_ca_key' was not found! Unable to re-generate CRL!"
   fi

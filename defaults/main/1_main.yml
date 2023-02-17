@@ -10,6 +10,7 @@ defaults_pki:
   crl_distribution:
     domain:
     protocols: ['https', 'http']
+  mode_public: '0640'  # or 0644
   vars: {}
   manage:
     users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
