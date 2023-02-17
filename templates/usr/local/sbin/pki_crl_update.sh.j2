@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+# script to periodically re-generate the CRL's as they expire after some time as configured with the 'crl_days' variable
+
+EASYRSA="{{ PKI_SCRIPT }}"
+OWNER="{{ pki_cnf.owner }}"
+GROUP="{{ pki_cnf.group_read }}"
+PWD_FILE="{{ PKI_HC.file.pwd }}"
+
+function gen_crl {
+  path_pki="$1"
+  ca_key="$path_pki/private/ca.key"
+  ca_pwd_file="$path_pki/$PWD_FILE"
+  if [ -f "$pki_ca_key" ]
+  then
+    EASYRSA_PKI="$path_pki" $EASYRSA --passin=file:"$ca_pwd_file" gen-crl
+    chown "$OWNER":"$GROUP" "$path_pki/crl.pem"
+    cmod 644 "$path_pki/crl.pem"
+  else
+    echo "CA-key '$pki_ca_key' was not found! Unable to re-generate CRL!"
+  fi
+}
+
+# root-ca
+gen_crl "{{ PKI_HC.dir.root_ca }}"
+
+# sub-ca's
+{% for subca_name in pki_cnf.sub_cas.keys() %}
+#   {{ subca_name }}
+gen_crl "{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ subca_name }}"
+{% endfor %}

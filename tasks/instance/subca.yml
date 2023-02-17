@@ -14,3 +14,8 @@
 - name: "{{ task_prefix_subca }} | Initializing SubCA"
   ansible.builtin.include_tasks: init_subca.yml
   when: not pki_subca_init.stat.exists
+
+- name: "{{ task_prefix_subca }} | Updating privileges"
+  ansible.builtin.include_tasks: update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"

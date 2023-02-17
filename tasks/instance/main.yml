@@ -32,12 +32,19 @@
     easyrsa_vars: "{{ pki_vars_ca }}"
     easyrsa_base: "{{ pki_path_ca }}"
 
+- name: "{{ task_prefix_pki }} | Updating privileges"
+  ansible.builtin.include_tasks: update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_ca }}"
+
 - name: "{{ task_prefix_pki }} | Processing SubCA's"
   ansible.builtin.include_tasks: subca.yml
   vars:
     pki_name_subca: "{{ pki_subca_item.key | safe_key }}"
     pki_cnf_subca: "{{ defaults_subca | combine(pki_subca_item.value, recursive=true) }}"
-    pki_vars_subca: "{{ pki_vars_ca | combine(pki_cnf_subca.vars, recursive=true) }}"
+    pki_vars_subca: "{{ defaults_vars | 
+    combine(PKI.vars, recursive=true) | 
+    combine(pki_cnf_subca.vars, recursive=true) }}"
     pki_path_subca: "{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
     task_prefix_subca: "{{ task_prefix_pki }} | SubCA '{{ pki_name_subca }}'"
   loop_control:

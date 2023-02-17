@@ -6,6 +6,10 @@ debug: false
 # default config => is overwritten by provided config
 defaults_pki:
   easyrsa_version: '3.1.2'
+  save_passwords: true
+  crl_distribution:
+    domain:
+    protocols: ['https', 'http']
   vars: {}
   manage:
     users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
@@ -50,9 +54,12 @@ defaults_vars:
 
   # will be ignored: 'no_pass', 'temp_dir', 'ext_dir', 'ssl_conf', 'batch'
 
+defaults_vars_root_ca:
+  crl_days: 3650  # would need to be regenerated with access to the root 'ca.key'
+
 defaults_subca:
   ca_cn: 'Auto-Generated Sub-CA'
   pwd:
 
-PKI_SCRIPT: "{{ PKI_HC.easyrsa.path.script }}/easyrsa"
+PKI_SCRIPT: "{{ PKI_HC.path.script }}/easyrsa"
 PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}_{{ PKI.easyrsa_version }}"

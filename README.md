@@ -65,7 +65,7 @@ ansible-galaxy install -r requirements.yml
 * **Warning:** Not every setting/variable you provide will be checked for validity. Bad config might break the role!
 
 
-* **Note:** If you want to read a good explanation of how 'keyUsage' and 'extendedKeyUsage' is to be used - check out this StackExchange answer: [LINK](https://superuser.com/questions/738612/openssl-ca-keyusage-extension/1248085#1248085)
+* **Note:** If you want to read a good explanation of how 'keyUsage' and 'extendedKeyUsage' are to be used - check out this StackExchange answer: [LINK](https://superuser.com/questions/738612/openssl-ca-keyusage-extension/1248085#1248085)
 
 
 * **Note:** If you want to know how to manually create a PKI/SubCA's using EasyRSA - check out [@QueuingKoala](https://gist.github.com/QueuingKoala)'s clean example on how to do that: [GitHub Gist](https://gist.github.com/QueuingKoala/e2c1c067a312384915b5) 
@@ -85,6 +85,7 @@ ansible-galaxy install -r requirements.yml
 
 * **Note:** You have multiple options to supply the CA/SubCA/Certificate passwords:
 
+  * if 'save_passwords' is set to true - the saved password will be retrieved after the CA is initialized
   * as inventory variable (_ansible-vault encrypted to be decrypted at runtime_)
   * --extra-vars at runtime
   * if no password was set, the role will prompt for one at runtime
@@ -97,7 +98,12 @@ ansible-galaxy install -r requirements.yml
   * specific config on instance/subca level will always override the inherited one
 
 
-* **Note:** You can find scripts for automated certificate-expiration monitoring that can be integrated with monitoring systems like [Zabbix](https://www.zabbix.com/documentation/current/en/manual/discovery/low_level_discovery) at [files/usr/local/bin/monitoring](https://github.com/ansibleguy/infra_pki/tree/latest/files/usr/local/bin/monitoring]).
+* **Note:** You can find scripts for automated certificate-expiration monitoring that can be integrated with monitoring systems like [Zabbix](https://www.zabbix.com/documentation/current/en/manual/discovery/low_level_discovery) at [files/usr/local/bin/monitoring](https://github.com/ansibleguy/infra_pki/tree/latest/files/usr/local/bin/monitoring).
+
+
+* **Warning:** The CRL-Distribution settings **CANNOT BE CHANGED** easily.
+
+  All existing certificates would have to be re-generated once the settings are changed.
 
 
 ## Usage
@@ -108,6 +114,11 @@ Define the config as needed:
 
 ```yaml
 pki:
+  save_passwords: true  # save ca/sub-ca passwords to file (only root read-access)
+  crl_distribution:
+    domain: 'crl.ansibleguy.net'  # domain that will be added to all certificates as CRL-distribution-point
+    protocols: ['https', 'http']
+  
   vars:
     req_country: 'AT'
     req_province: 'Styria'

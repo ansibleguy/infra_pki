@@ -3,7 +3,6 @@
 PKI_HC:
   easyrsa:
     path:
-      script: '/usr/local/sbin'
       template: '/var/lib/easyrsa_template'  # version number appended
     dl: 'https://github.com/OpenVPN/easy-rsa/releases/download/v'
     vars_ignore:
@@ -20,7 +19,11 @@ PKI_HC:
     certs: 'pki'  # {path_base}/{pki_name}/[ca|subca_**]/{dir.certs}
 
   path:
-    venv: '/var/lib/ansibleguy.infra_pki/venv'
+    script: '/usr/local/sbin'
+
+  file:
+    pwd: '.ca.pwd'
+
 
   requirements: ['python3-pexpect']
 

@@ -1,5 +1,25 @@
 ---
 
+- name: "{{ task_prefix_pki }} | PWD-CA | Checking if CA-key is available"
+  ansible.builtin.stat:
+    path: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd }}"
+  register: pki_ca_pwd_file
+  when: PKI.save_passwords | bool
+
+- name: "{{ task_prefix_pki }} | PWD-CA | Retrieving CA-password from file"
+  ansible.builtin.command: "cat {{ pki_path_ca }}/{{ PKI_HC.file.pwd }}"
+  register: pki_ca_pwd_file_raw
+  when:
+    - PKI.save_passwords | bool
+    - pki_ca_pwd_file.stat.exists
+
+- name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password to saved one"
+  ansible.builtin.set_fact:
+    pki_ca_pwd: "{{ pki_ca_pwd_file_raw.stdout }}"
+  when:
+    - PKI.save_passwords | bool
+    - pki_ca_pwd_file.stat.exists
+
 - name: "{{ task_prefix_pki }} | PWD-CA | Checking if CA-password was provided"
   ansible.builtin.set_fact:
     pki_ca_pwd: "{{ pki_cnf.pwd }}"
@@ -13,7 +33,7 @@
   when: pki_ca_pwd is undefined
   delegate_to: localhost
 
-- name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password"
+- name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password to user-input"
   ansible.builtin.set_fact:
     pki_ca_pwd: "{{ hostvars['localhost'].pki_ca_pwd_raw.user_input }}"
   when: pki_ca_pwd is undefined

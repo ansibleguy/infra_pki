@@ -33,10 +33,8 @@
       Question:
         - 'yes'  # existing directory
         - 'yes'  # remove existing vars
-  args:
-    chdir: "{{ pki_path_base }}"
   environment:
-    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+    EASYRSA_PKI: "{{ pki_path_ca }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Copying config"
   ansible.builtin.template:
@@ -57,8 +55,16 @@
         - "{{ pki_ca_pwd }}"
         - "{{ pki_ca_pwd }}"
         - "{{ pki_cnf.ca_cn }}"
-  args:
-    chdir: "{{ pki_path_base }}"
   environment:
-    EASYRSA_PKI: "{{ PKI_HC.dir.root_ca }}"
+    EASYRSA_PKI: "{{ pki_path_ca }}"
   no_log: true
+
+- name: "{{ task_prefix_pki }} | Init-CA | Saving password"
+  ansible.builtin.copy:
+    dest: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd }}"
+    content: "{{ pki_ca_pwd }}"
+    mode: 0400
+    owner: 'root'
+    group: 'root'
+  no_log: true
+  when: PKI.save_passwords | bool
