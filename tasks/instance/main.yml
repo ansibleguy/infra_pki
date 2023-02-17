@@ -32,6 +32,17 @@
     easyrsa_vars: "{{ pki_vars }}"
     easyrsa_base: "{{ pki_path_ca }}"
 
+- name: "{{ task_prefix_pki }} | Adding certificate extensions"
+  ansible.builtin.template:
+    src: 'templates/var/lib/pki/instance/x509-types/COMMON.j2'
+    dest: "{{ pki_path_ca }}/x509-types/COMMON"
+    mode: 0640
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+  vars:
+    pki_extensions: "{{ PKI.extensions |
+    combine(pki_cnf.extensions, recursive=true) }}"
+
 - name: "{{ task_prefix_pki }} | Updating privileges"
   ansible.builtin.include_tasks: update_privileges.yml
   vars:
@@ -40,6 +51,9 @@
 
 - name: "{{ task_prefix_pki }} | Processing SubCA's"
   ansible.builtin.include_tasks: subca.yml
+  when: >
+    only_ca is undefined or
+    only_ca == pki_name_subca
   vars:
     pki_name_subca: "{{ pki_subca_item.key | safe_key }}"
     pki_cnf_subca: "{{ defaults_subca | combine(pki_subca_item.value, recursive=true) }}"
@@ -51,3 +65,5 @@
   loop_control:
     loop_var: pki_subca_item
   with_dict: "{{ pki_cnf.sub_cas }}"
+  no_log: true  # passwords
+  tags: always

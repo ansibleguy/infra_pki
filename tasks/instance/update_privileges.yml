@@ -23,10 +23,20 @@
 - name: "{{ privilege_task_prefix }} | Setting privileges on public directory content"
   ansible.builtin.command: "chmod {{ PKI.mode_public }} {{ easyrsa_base }}/{{ item }}/*"
   loop: "{{ PKI_HC.easyrsa.privileges.public.dirs }}"
+  register: pki_privs_public_mode
+  changed_when: false
+  failed_when:
+    - pki_privs_public_mode.rc != 0
+    - "'No such file or directory' not in pki_privs_public_mode.stderr"
 
 - name: "{{ privilege_task_prefix }} | Setting ownership on public directory content"
   ansible.builtin.command: "chown {{ pki_cnf.owner }}:{{ pki_cnf.group_read }} {{ easyrsa_base }}/{{ item }}/*"
   loop: "{{ PKI_HC.easyrsa.privileges.public.dirs }}"
+  register: pki_privs_public_owner
+  changed_when: false
+  failed_when:
+    - pki_privs_public_owner.rc != 0
+    - "'No such file or directory' not in pki_privs_public_owner.stderr"
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on private directories"
   ansible.builtin.file:
@@ -51,10 +61,20 @@
 - name: "{{ privilege_task_prefix }} | Setting privileges on private directory content"
   ansible.builtin.command: "chmod 640 {{ easyrsa_base }}/{{ item }}/*"
   loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
+  register: pki_privs_private_mode
+  changed_when: false
+  failed_when:
+    - pki_privs_private_mode.rc != 0
+    - "'No such file or directory' not in pki_privs_private_mode.stderr"
 
 - name: "{{ privilege_task_prefix }} | Setting ownership on private directory content"
   ansible.builtin.command: "chown {{ pki_cnf.owner }}:{{ pki_cnf.owner }} {{ easyrsa_base }}/{{ item }}/*"
   loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
+  register: pki_privs_private_owner
+  changed_when: false
+  failed_when:
+    - pki_privs_private_owner.rc != 0
+    - "'No such file or directory' not in pki_privs_private_owner.stderr"
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on password file"
   ansible.builtin.file:

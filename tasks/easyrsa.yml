@@ -13,6 +13,7 @@
 - name: PKI | EasyRSA | Checking EasyRSA version
   ansible.builtin.command: "{{ PKI_SCRIPT }} --version"
   register: pki_easyrsa_version
+  changed_when: false
   when:
     - pki_easyrsa_tmpl.stat.exists
     - pki_easyrsa_script.stat.exists

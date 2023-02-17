@@ -3,7 +3,7 @@
 PKI_HC:
   easyrsa:
     path:
-      template: '/var/lib/easyrsa_template'  # version number appended
+      template: '/var/lib/easyrsa_template'  # version number = sub-directory
     dl: 'https://github.com/OpenVPN/easy-rsa/releases/download'
     vars_ignore:
       - 'temp_dir'
@@ -12,12 +12,13 @@ PKI_HC:
       - 'ssl_conf'
       - 'batch'
       - 'pki'
+    pwd_min_length: 8
     privileges:
       public:
         dirs: ['issued', 'certs_by_serial']
         files: ['ca.crt', 'crl.pem']
       private:
-        dirs: ['private', 'revoked', 'reqs']
+        dirs: ['private', 'revoked', 'reqs', 'x509-types']
         files:
           - 'serial'
           - 'serial.old'
@@ -43,11 +44,13 @@ PKI_HC:
 
   requirements: ['python3-pexpect', 'openssl']
 
-  none_values: [none, 'none', '', ' ']
-
   options:
     key_size: ['1024', '2048', '4096', '8192']
     algo: ['rsa', 'ec', 'ed']
     digest: ['md5', 'sha1', 'sha256', 'sha224', 'sha384', 'sha512']
+
+  fallback_timezone: 'GMT'
+  tags:
+    certs: [certs, renew_certs, create_certs, revoke_certs]
 
 PKI_VENV: "{{ PKI_HC.path.venv }}/bin/activate"

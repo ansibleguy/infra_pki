@@ -10,8 +10,8 @@ set_var EASYRSA_SSL_CONF "$EASYRSA/openssl-easyrsa.cnf"
 
 # variables
 
-{% for var, value in easyrsa_vars %}
-{%   if var not in PKI_HC.easyrsa.vars_ignore and value not in PKI_HC.none_values %}
+{% for var, value in easyrsa_vars.items() %}
+{%   if var not in PKI_HC.easyrsa.vars_ignore and value | default(none, true) is not none %}
 set_var EASYRSA_{{ var | upper }} {{ value }}
 {%   endif %}
 {% endfor %}

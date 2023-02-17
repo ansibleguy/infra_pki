@@ -15,9 +15,30 @@
   ansible.builtin.include_tasks: init_subca.yml
   when: not pki_subca_init.stat.exists
 
+- name: "{{ task_prefix_subca }} | Adding certificate extensions"
+  ansible.builtin.template:
+    src: 'templates/var/lib/pki/instance/x509-types/COMMON.j2'
+    dest: "{{ pki_path_subca }}/x509-types/COMMON"
+    mode: 0640
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+  vars:
+    pki_extensions: "{{ PKI.extensions |
+    combine(pki_cnf.extensions, recursive=true) |
+    combine(pki_cnf_subca.extensions, recursive=true) }}"
+
+- name: "{{ task_prefix_subca }} | Processing certificates"
+  ansible.builtin.include_tasks: certs/main.yml
+  vars:
+    pki_cert_types: "{{ pki_cnf_subca.certs }}"
+  tags: always
+  args:
+    apply:
+      tags: "{{ PKI_HC.tags.certs }}"
+
 - name: "{{ task_prefix_subca }} | Updating privileges"
   ansible.builtin.include_tasks: update_privileges.yml
   vars:
     easyrsa_base: "{{ pki_path_subca }}"
     privilege_task_prefix: "{{ task_prefix_subca }}"
-
+  tags: always

@@ -13,13 +13,15 @@
       - PKI.instances | length > 0
       - PKI.crl_distribution.domain is defined
       - PKI.crl_distribution.domain | valid_domain
-      - PKI.crl_distribution.protocols | length > 0
       - PKI.mode_public | string in ['0644', '0640']
 
 - name: PKI | Installing requirements
   ansible.builtin.package:
     name: "{{ PKI_HC.requirements }}"
     state: present
+
+- name: PKI | Time
+  ansible.builtin.import_tasks: time.yml
 
 - name: PKI | EasyRSA
   ansible.builtin.import_tasks: easyrsa.yml
@@ -32,10 +34,17 @@
     pki_vars: "{{ defaults_vars | 
     combine(defaults_vars_root_ca, recursive=true) | 
     combine(PKI.vars, recursive=true) | 
-    combine(pki_vars, recursive=true) }}"
+    combine(pki_cnf.vars, recursive=true) }}"
     pki_path_base: "{{ pki_cnf.path_base }}/{{ pki_name }}"
     pki_path_ca: "{{ pki_path_base }}/{{ PKI_HC.dir.root_ca }}"
     task_prefix_pki: "PKI | Instance '{{ pki_name }}'"
   loop_control:
     loop_var: pki_item
   with_dict: "{{ PKI.instances }}"
+  no_log: true  # passwords
+  tags: always
+
+- name: PKI | Services
+  ansible.builtin.import_tasks: services.yml
+
+# todo: option to set-up nginx to server ca.crt and crl.pem to 'clients'

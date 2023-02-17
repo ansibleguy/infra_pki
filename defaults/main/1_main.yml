@@ -9,25 +9,28 @@ defaults_pki:
   save_passwords: true
   crl_distribution:
     domain:
-    protocols: ['https', 'http']
+    protocol: 'http'
   mode_public: '0640'  # or 0644
   vars: {}
   manage:
     users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
   instances: {}
+  timezone:
+  extensions: {}
 
 PKI: "{{ defaults_pki | combine(pki, recursive=true) }}"
 
-defaults_instance:
+defaults_instance:  # > pki_cnf
   ca_cn: 'Auto-Generated CA'
   path_base: '/var/lib/pki'
   owner: 'pki'
   group: 'pki'
   group_read: 'pki_read'  # for monitoring and so on
-  pwd:
+  pwd_ca:
+  vars: {}
+  extensions: {}
 
-
-defaults_vars:
+defaults_vars:  # > pki_vars & > pki_vars_subca
   # if value is set to {none}, 'none', '' or ' ' the variable will be ignored
   #   easyrsa-defaults will be used instead
   req_country: 'AT'
@@ -55,14 +58,17 @@ defaults_vars:
 
   # will be ignored: 'no_pass', 'temp_dir', 'ext_dir', 'ssl_conf', 'batch'
 
-defaults_vars_root_ca:
+defaults_vars_root_ca:  # > pki_vars
   crl_days: 3650  # would need to be regenerated with access to the root 'ca.key'
-  ca_expire: 9125  # 25 years
-  cert_expire: 7300  # 20 years; sub-ca's
+  ca_expire: 7300  # 20 years
+  cert_expire: 5475  # 15 years; sub-ca's
+  digest: 'sha512'
 
-defaults_subca:
+defaults_subca:  # > pki_cnf_subca
   ca_cn: 'Auto-Generated Sub-CA'
-  pwd:
+  pwd_ca:
+  vars: {}
+  extensions: {}
 
 PKI_SCRIPT: "{{ PKI_HC.path.script }}/easyrsa"
-PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}_{{ PKI.easyrsa_version }}"
+PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}/{{ PKI.easyrsa_version }}"

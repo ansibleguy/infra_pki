@@ -45,7 +45,10 @@ ansible-galaxy install -r requirements.yml
 
 
   * **Default config**:
-    * 
+    * Expiration:
+      * Root-CA: 20 years
+      * Sub-CA: 15 years
+      * Certificates: 3 years
  
 
   * **Default opt-ins**:
@@ -64,6 +67,9 @@ ansible-galaxy install -r requirements.yml
 
 
 * **Warning:** Not every setting/variable you provide will be checked for validity. Bad config might break the role!
+
+
+* **Note:** If you want to read more about (_x509_) certificates check out the [OpenSSL documentation](https://www.openssl.org/docs/man1.0.2/man5/x509v3_config.html).
 
 
 * **Note:** If you want to read a good explanation of how 'keyUsage' and 'extendedKeyUsage' are to be used - check out this StackExchange answer: [LINK](https://superuser.com/questions/738612/openssl-ca-keyusage-extension/1248085#1248085)
@@ -110,6 +116,20 @@ ansible-galaxy install -r requirements.yml
 * **Note:** The 'cert_expire' variable of the root-ca will set the runtime of the sub-ca's!
 
 
+* **Note:** Passwords used for CA/SubCA/Certificate encryption are checked for complexity rules:
+
+  * min. 8 characters long
+  * must contain
+    * number
+    * uppercase letter
+    * lowercase letter
+
+
+* **Note:** Some systems like docker-containers seem to have time-issues when the default timezone is set.
+
+  In that case an error like this will occur: ```start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ```
+
+
 ## Usage
 
 ### Config
@@ -121,7 +141,8 @@ pki:
   save_passwords: true  # save ca/sub-ca passwords to file (only root read-access)
   crl_distribution:
     domain: 'crl.ansibleguy.net'  # domain that will be added to all certificates as CRL-distribution-point
-    protocols: ['https', 'http']
+    protocol: 'http'
+  timezone: 'Europe/Vienna'
   
   vars:
     req_country: 'AT'

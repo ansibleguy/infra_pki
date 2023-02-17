@@ -24,17 +24,17 @@
     state: directory
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.group_read }}"
-    mode: 0750
+    mode: 0755
 
-- name: "{{ task_prefix_pki }} | Init-CA | Initializing"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} init-pki"
-    responses:
-      Question:
-        - 'yes'  # existing directory
-        - 'yes'  # remove existing vars
-  environment:
-    EASYRSA_PKI: "{{ pki_path_ca }}"
+- name: "{{ task_prefix_pki }} | Init-CA | Copying from template"
+  ansible.builtin.copy:
+    src: "{{ PKI_TMPL }}/"
+    remote_src: true
+    dest: "{{ pki_path_ca }}/"
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+    mode: 0640
+    directory_mode: 0750
 
 - name: "{{ task_prefix_pki }} | Init-CA | Copying config"
   ansible.builtin.template:
@@ -47,14 +47,21 @@
     easyrsa_vars: "{{ pki_vars }}"
     easyrsa_base: "{{ pki_path_ca }}"
 
+- name: "{{ task_prefix_pki }} | Init-CA | Initializing"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} init-pki soft"
+    responses:
+      "Confirm removal": 'yes'
+  environment:
+    EASYRSA_PKI: "{{ pki_path_ca }}"
+
 - name: "{{ task_prefix_pki }} | Init-CA | Generating CA"
   ansible.builtin.expect:
     command: "{{ PKI_SCRIPT }} build-ca"
     responses:
-      Question:
-        - "{{ pki_ca_pwd }}"
-        - "{{ pki_ca_pwd }}"
-        - "{{ pki_cnf.ca_cn }}"
+      "Enter New CA Key Passphrase": "{{ pki_ca_pwd }}"
+      "Confirm New CA Key Passphrase": "{{ pki_ca_pwd }}"
+      "Common Name": "{{ pki_cnf.ca_cn }}"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
   no_log: true

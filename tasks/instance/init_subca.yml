@@ -23,17 +23,17 @@
     state: directory
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.group_read }}"
-    mode: 0750
+    mode: 0755
 
-- name: "{{ task_prefix_subca }} | Init-SubCA | Initializing"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} init-pki"
-    responses:
-      Question:
-        - 'yes'  # existing directory
-        - 'yes'  # remove existing vars
-  environment:
-    EASYRSA_PKI: "{{ pki_path_subca }}"
+- name: "{{ task_prefix_subca }} | Init-SubCA | Copying from template"
+  ansible.builtin.copy:
+    src: "{{ PKI_TMPL }}/"
+    remote_src: true
+    dest: "{{ pki_path_subca }}/"
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+    mode: 0640
+    directory_mode: 0750
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Copying config"
   ansible.builtin.template:
@@ -46,14 +46,21 @@
     easyrsa_vars: "{{ pki_vars_subca }}"
     easyrsa_base: "{{ pki_path_subca }}"
 
+- name: "{{ task_prefix_subca }} | Init-SubCA | Initializing"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} init-pki soft"
+    responses:
+      "Confirm removal": 'yes'
+  environment:
+    EASYRSA_PKI: "{{ pki_path_subca }}"
+
 - name: "{{ task_prefix_subca }} | Init-SubCA | Generating SubCA"
   ansible.builtin.expect:
     command: "{{ PKI_SCRIPT }} build-ca subca"
     responses:
-      Question:
-        - "{{ pki_subca_pwd }}"
-        - "{{ pki_subca_pwd }}"
-        - "{{ pki_cnf_subca.ca_cn }}"
+      "Enter New CA Key Passphrase": "{{ pki_subca_pwd }}"
+      "Confirm New CA Key Passphrase": "{{ pki_subca_pwd }}"
+      "Common Name": "{{ pki_cnf_subca.ca_cn }}"
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
   no_log: true
@@ -62,21 +69,24 @@
   ansible.builtin.command: "{{ PKI_SCRIPT }} import-req {{ pki_path_subca }}/reqs/ca.req subca_{{ pki_name_subca }}"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
+  args:
+    creates: "{{ pki_path_ca }}/reqs/subca_{{ pki_name_subca }}.req"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Signing SubCA via CA"
   ansible.builtin.expect:
     command: "{{ PKI_SCRIPT }} sign-req ca subca_{{ pki_name_subca }}"
     responses:
-      Question:
-        - 'yes'
-        - "{{ pki_ca_pwd }}"
+      "Confirm": 'yes'
+      "pass phrase": "{{ pki_ca_pwd }}"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
+  args:
+    creates: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}.crt"
   no_log: true
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Copying signed SubCA certificate"
   ansible.builtin.copy:
-    src: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}"
+    src: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}.crt"
     remote_src: true
     dest: "{{ pki_path_subca }}/{{ PKI_HC.file.ca }}"
     mode: "{{ PKI.mode_public }}"

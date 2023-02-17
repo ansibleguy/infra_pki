@@ -1,0 +1,17 @@
+---
+
+# todo: pull existing certs to compare against config
+
+- name: "{{ task_prefix_subca }} | Certs | Processing certificate types"
+  ansible.builtin.include_tasks: types.yml
+  tags: always
+  args:
+    apply:
+      tags: "{{ PKI_HC.tags.certs }}"
+  vars:
+    pki_cert_type: "{{ pki_cert_type_item.key }}"
+    pki_certs: "{{ pki_cert_type_item.value }}"
+    task_prefix_certs: "{{ task_prefix_subca }} | Certs | {{ pki_cert_type }}"
+  loop_control:
+    loop_var: pki_cert_type_item
+  with_dict: "{{ pki_cert_types }}"

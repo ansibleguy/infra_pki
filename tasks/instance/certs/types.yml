@@ -1,0 +1,11 @@
+---
+
+- name: "{{ task_prefix_certs }} | Processing certificates"
+  ansible.builtin.debug:
+    msg: "{{ pki_cert_type }}: '{{ pki_cert_name }}'"
+  vars:
+    pki_cert_name: "{{ pki_cert_item.key }}"
+    pki_cert_cnf: "{{ pki_cert_item.value }}"
+  loop_control:
+    loop_var: pki_cert_item
+  with_dict: "{{ pki_certs }}"

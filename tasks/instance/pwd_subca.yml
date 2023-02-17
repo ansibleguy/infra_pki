@@ -9,6 +9,7 @@
 - name: "{{ task_prefix_pki }} | PWD-SubCA | Retrieving CA-password from file"
   ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd }}"
   register: pki_subca_pwd_file_raw
+  changed_when: false
   when:
     - PKI.save_passwords | bool
     - pki_subca_pwd_file.stat.exists
@@ -22,8 +23,8 @@
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Checking if SubCA-password was provided"
   ansible.builtin.set_fact:
-    pki_subca_pwd: "{{ pki_subca_cnf.pwd }}"
-  when: "pki_cnf.pwd not in [none, '', ' ']"
+    pki_subca_pwd: "{{ pki_cnf_subca.pwd_ca }}"
+  when: pki_cnf_subca.pwd_ca | default(none, true) != none
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Prompting for SubCA-password"
   ansible.builtin.pause:
@@ -33,7 +34,18 @@
   when: pki_subca_pwd is undefined
   delegate_to: localhost
 
+- ansible.builtin.debug:
+    msg: "{{ hostvars['localhost'] }}"
+  when:
+    - pki_subca_pwd is undefined
+    - "'pki_subca_pwd_raw' not in hostvars['localhost']"
+
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Setting CA-password to user-input"
   ansible.builtin.set_fact:
     pki_subca_pwd: "{{ hostvars['localhost'].pki_subca_pwd_raw.user_input }}"
   when: pki_subca_pwd is undefined
+
+- name: "{{ task_prefix_subca }} | PWD-SubCA | Checking that password meets the requirements"
+  ansible.builtin.assert:
+    that:
+      - pki_ca_pwd | meets_password_complexity(PKI_HC)
