@@ -125,11 +125,6 @@ ansible-galaxy install -r requirements.yml
     * lowercase letter
 
 
-* **Note:** Some systems like docker-containers seem to have time-issues when the default timezone is set.
-
-  In that case an error like this will occur: ```start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ```
-
-
 ## Usage
 
 ### Config

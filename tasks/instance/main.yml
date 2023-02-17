@@ -43,12 +43,6 @@
     pki_extensions: "{{ PKI.extensions |
     combine(pki_cnf.extensions, recursive=true) }}"
 
-- name: "{{ task_prefix_pki }} | Updating privileges"
-  ansible.builtin.include_tasks: update_privileges.yml
-  vars:
-    easyrsa_base: "{{ pki_path_ca }}"
-    privilege_task_prefix: "{{ task_prefix_pki }}"
-
 - name: "{{ task_prefix_pki }} | Processing SubCA's"
   ansible.builtin.include_tasks: subca.yml
   when: >
@@ -67,3 +61,9 @@
   with_dict: "{{ pki_cnf.sub_cas }}"
   no_log: true  # passwords
   tags: always
+
+- name: "{{ task_prefix_pki }} | Updating privileges"
+  ansible.builtin.include_tasks: update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_ca }}"
+    privilege_task_prefix: "{{ task_prefix_pki }}"
