@@ -34,7 +34,7 @@
   tags: always
   args:
     apply:
-      tags: "{{ PKI_HC.tags.certs }}"
+      tags: [certs, renew_certs, create_certs, revoke_certs]
 
 - name: "{{ task_prefix_subca }} | Updating privileges"
   ansible.builtin.include_tasks: update_privileges.yml

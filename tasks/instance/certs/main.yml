@@ -7,7 +7,7 @@
   tags: always
   args:
     apply:
-      tags: "{{ PKI_HC.tags.certs }}"
+      tags: [certs, renew_certs, create_certs, revoke_certs]
   vars:
     pki_cert_type: "{{ pki_cert_type_item.key }}"
     pki_certs: "{{ pki_cert_type_item.value }}"

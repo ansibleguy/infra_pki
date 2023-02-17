@@ -133,7 +133,11 @@ Define the config as needed:
 
 ```yaml
 pki:
+  manage:
+    users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
   save_passwords: true  # save ca/sub-ca passwords to file (only root read-access)
+  purge: true  # remove certificates that exist on the CA but not in your config
+
   crl_distribution:
     domain: 'crl.ansibleguy.net'  # domain that will be added to all certificates as CRL-distribution-point
     protocol: 'http'
@@ -162,10 +166,14 @@ pki:
           vars:
             key_size: 2048
           
+          certs: {}
+          
         vpn:
           ca_cn: 'AnsibleGuy VPN SubCA'
           vars:
             cert_expire: 365
+
+          certs: {}
 ```
 
 This is how the PKI is structured on the filesystem:

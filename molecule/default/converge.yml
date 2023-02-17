@@ -7,7 +7,6 @@
       save_passwords: true
       crl_distribution:
         domain: 'crl.ansibleguy.net'
-        protocol: 'http'
 
       instances:
         test1:
@@ -16,6 +15,12 @@
           sub_cas:
             sub1:
               pwd_ca: 'tEst54321'
+              certs:
+                server:
+                  ansibleguy_net:
+                    cn: 'AnsibleGuy Website'
+                    dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                    ip: ['135.181.170.217']
 
   roles:
     - ansibleguy.infra_pki

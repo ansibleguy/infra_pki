@@ -5,17 +5,22 @@ debug: false
 
 # default config => is overwritten by provided config
 defaults_pki:
-  easyrsa_version: '3.1.2'
+  manage:
+    users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
+
   save_passwords: true
+  purge: false  # remove certificates that exist on the CA but not in your config
+
   crl_distribution:
     domain:
     protocol: 'http'
+
   mode_public: '0640'  # or 0644
-  vars: {}
-  manage:
-    users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
-  instances: {}
   timezone:
+  easyrsa_version: '3.1.2'
+
+  vars: {}
+  instances: {}
   extensions: {}
 
 PKI: "{{ defaults_pki | combine(pki, recursive=true) }}"
@@ -69,6 +74,7 @@ defaults_subca:  # > pki_cnf_subca
   pwd_ca:
   vars: {}
   extensions: {}
+  certs: {}
 
 PKI_SCRIPT: "{{ PKI_HC.path.script }}/easyrsa"
 PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}/{{ PKI.easyrsa_version }}"
