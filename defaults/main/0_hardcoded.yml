@@ -4,7 +4,7 @@ PKI_HC:
   easyrsa:
     path:
       template: '/var/lib/easyrsa_template'  # version number appended
-    dl: 'https://github.com/OpenVPN/easy-rsa/releases/download/v'
+    dl: 'https://github.com/OpenVPN/easy-rsa/releases/download'
     vars_ignore:
       - 'temp_dir'
       - 'ext_dir'
@@ -41,7 +41,7 @@ PKI_HC:
     ca: 'ca.crt'
 
 
-  requirements: ['python3-pexpect']
+  requirements: ['python3-pexpect', 'openssl']
 
   none_values: [none, 'none', '', ' ']
 

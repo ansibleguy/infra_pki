@@ -9,7 +9,7 @@
 - name: "{{ task_prefix_pki }} | Validating vars"
   ansible.builtin.include_tasks: validate_vars.yml
   vars:
-    check_vars: "{{ pki_vars_ca }}"
+    check_vars: "{{ pki_vars }}"
     check_task_prefix: "{{ task_prefix_pki }}"
 
 - name: "{{ task_prefix_pki }} | Checking if CA is initialized"
@@ -29,7 +29,7 @@
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
   vars:
-    easyrsa_vars: "{{ pki_vars_ca }}"
+    easyrsa_vars: "{{ pki_vars }}"
     easyrsa_base: "{{ pki_path_ca }}"
 
 - name: "{{ task_prefix_pki }} | Updating privileges"

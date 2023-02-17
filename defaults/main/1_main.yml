@@ -57,6 +57,8 @@ defaults_vars:
 
 defaults_vars_root_ca:
   crl_days: 3650  # would need to be regenerated with access to the root 'ca.key'
+  ca_expire: 9125  # 25 years
+  cert_expire: 7300  # 20 years; sub-ca's
 
 defaults_subca:
   ca_cn: 'Auto-Generated Sub-CA'

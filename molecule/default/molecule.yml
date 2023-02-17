@@ -16,28 +16,19 @@ _references:
 
 dependency:
   name: galaxy
-#  options:
-#    requirements-file: 'requirements.yml'
 driver:
   name: docker
 platforms:
-  - name: test-ag-infra_pki-tester
+  - name: test-ag-infra_pki-1
     docker_networks:
       - name: 'test-ag-infra_pki'
         ipam_config:
-          - subnet: '192.168.N.0/24'
-            gateway: '192.168.N.254'
+          - subnet: '192.168.13.0/24'
+            gateway: '192.168.13.254'
     networks:
       - name: 'test-ag-infra_pki'
-        ipv4_address: '192.168.N.1'
+        ipv4_address: '192.168.13.1'
     groups: [grp_tester]
-    <<: *docker_all
-
-  - name: test-ag-infra_pki-1
-    networks:
-      - name: 'test-ag-infra_pki'
-        ipv4_address: '192.168.N.2'
-    groups: [grp_targets]
     <<: *docker_all
 
 provisioner:

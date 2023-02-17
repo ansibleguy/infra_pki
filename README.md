@@ -37,6 +37,7 @@ ansible-galaxy install -r requirements.yml
 
 * **Package installation**
   * Python3 '[pexpect](https://pexpect.readthedocs.io/en/stable/)' module as required by the [ansible.builtin.expect](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/expect_module.html) module.
+  * OpenSSL
 
 
 * **Configuration**
@@ -106,6 +107,9 @@ ansible-galaxy install -r requirements.yml
   All existing certificates would have to be re-generated once the settings are changed.
 
 
+* **Note:** The 'cert_expire' variable of the root-ca will set the runtime of the sub-ca's!
+
+
 ## Usage
 
 ### Config
@@ -124,12 +128,14 @@ pki:
     req_province: 'Styria'
     req_org: 'AnsibleGuy'
     req_email: 'pki@ansibleguy.net'
-    ca_expire: 7300  # 20 years
+    ca_expire: 9125  # 25 years
+    cert_expire: 5475  # 15 years; sub-ca runtime
 
   instances:
     pki_name:
       ca_cn: 'AnsibleGuy CA'
       vars:
+        ca_expire: 5475  # 15 years
         cert_expire: 1095  # 3 years
         key_size: 4096
         digest: 'sha512'

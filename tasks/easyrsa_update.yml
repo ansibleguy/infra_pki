@@ -1,0 +1,53 @@
+---
+
+- name: PKI | EasyRSA Update | Removing EasyRSA-template directory
+  ansible.builtin.file:
+    path: "{{ PKI_TMPL }}"
+    state: absent
+  diff: false
+
+- name: PKI | EasyRSA Update | Adding EasyRSA-template directory
+  ansible.builtin.file:
+    path: "{{ PKI_TMPL }}"
+    state: directory
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+
+- name: PKI | EasyRSA Update | Downloading EasyRSA
+  ansible.builtin.unarchive:
+    src: "{{ PKI_HC.easyrsa.dl }}/v{{ PKI.easyrsa_version }}/EasyRSA-{{ PKI.easyrsa_version }}.tgz"
+    remote_src: true
+    dest: "{{ PKI_TMPL }}"
+    owner: 'root'
+    group: 'root'
+    extra_opts: ['--strip-components=1']
+
+- name: PKI | EasyRSA Update | Copying script
+  ansible.builtin.copy:
+    src: "{{ PKI_TMPL }}/easyrsa"
+    remote_src: true
+    dest: "{{ PKI_SCRIPT }}"
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+
+- name: PKI | EasyRSA Update | Copying config
+  ansible.builtin.copy:
+    src: "{{ PKI_TMPL }}/openssl-easyrsa.cnf"
+    remote_src: true
+    dest: "{{ PKI_HC.path.script }}/openssl-easyrsa.cnf"
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+
+- name: PKI | EasyRSA Update | Removing unnecessary files from template
+  ansible.builtin.file:
+    state: absent
+    path: "{{ PKI_TMPL }}/{{ item }}"
+  diff: false
+  ignore_errors: true
+  loop: [
+    'doc', 'ChangeLog', 'mktemp.txt', 'README.md', 'README.quickstart.md',
+    'vars.example', 'easyrsa', 'openssl-easyrsa.cnf',
+  ]

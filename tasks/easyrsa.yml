@@ -1,63 +1,25 @@
 ---
 
-- name: PKI | EasyRSA | Checking if EasyRSA is downloaded
+- name: PKI | EasyRSA | Checking if EasyRSA is downloaded (1/2)
   ansible.builtin.stat:
     path: "{{ PKI_TMPL }}"
   register: pki_easyrsa_tmpl
 
-- name: PKI | EasyRSA | Adding EasyRSA directory
-  ansible.builtin.file:
-    path: "{{ PKI_TMPL }}"
-    state: directory
-    owner: 'root'
-    group: 'root'
-    mode: 0755
-  when: not pki_easyrsa_tmpl.stat.exists
-
-- name: PKI | EasyRSA | Downloading EasyRSA
-  ansible.builtin.unarchive:
-    src: "{{ PKI_HC.easyrsa_dl }}/v{{ PKI.easyrsa_version }}/EasyRSA-{{ PKI.easyrsa_version }}.tgz"
-    remote_src: true
-    dest: "{{ PKI_TMPL }}"
-  register: pki_easyrsa_tmpl
-  when: not pki_easyrsa_tmpl.stat.exists
+- name: PKI | EasyRSA | Checking if EasyRSA is downloaded (2/2)
+  ansible.builtin.stat:
+    path: "{{ PKI_SCRIPT }}"
+  register: pki_easyrsa_script
 
 - name: PKI | EasyRSA | Checking EasyRSA version
   ansible.builtin.command: "{{ PKI_SCRIPT }} --version"
   register: pki_easyrsa_version
-  when: not pki_easyrsa_tmpl.changed
+  when:
+    - pki_easyrsa_tmpl.stat.exists
+    - pki_easyrsa_script.stat.exists
 
-- name: PKI | EasyRSA | Copying script if needed
-  ansible.builtin.copy:
-    src: "{{ PKI_TMPL }}/easyrsa"
-    remote_src: true
-    dest: "{{ PKI_SCRIPT }}"
-    owner: 'root'
-    group: 'root'
-    mode: 0755
-  register: pki_easyrsa_script
+- name: PKI | EasyRSA | Downloading/Updating
+  ansible.builtin.import_tasks: easyrsa_update.yml
   when: >
-    pki_easyrsa_tmpl.changed or
+    not pki_easyrsa_tmpl.stat.exists or
+    not pki_easyrsa_script.stat.exists or
     PKI.easyrsa_version not in pki_easyrsa_version.stdout
-
-- name: PKI | EasyRSA | Copying config if needed
-  ansible.builtin.copy:
-    src: "{{ PKI_TMPL }}/openssl-easyrsa.cnf"
-    remote_src: true
-    dest: "{{ PKI_SCRIPT }}"
-    owner: 'root'
-    group: 'root'
-    mode: 0644
-  when: pki_easyrsa_script.changed
-
-- name: PKI | EasyRSA | Removing unnecessary files from template
-  ansible.builtin.file:
-    state: absent
-    path: "{{ PKI_TMPL }}/{{ item }}"
-  diff: false
-  ignore_errors: true
-  loop: [
-    'doc', 'ChangeLog', 'mktemp.txt', 'README.md', 'README.quickstart.md',
-    'vars.example', 'easyrsa', 'openssl-easyrsa.cnf',
-  ]
-  when: pki_easyrsa_tmpl.changed

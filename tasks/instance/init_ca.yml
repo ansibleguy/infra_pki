@@ -44,7 +44,7 @@
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
   vars:
-    easyrsa_vars: "{{ pki_vars_ca }}"
+    easyrsa_vars: "{{ pki_vars }}"
     easyrsa_base: "{{ pki_path_ca }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Generating CA"
