@@ -2,7 +2,7 @@
 
 - name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating request"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
     gen-req {{ pki_cert_file }}
     {% if pki_cert_no_pass | bool %}nopass{% endif %}"
     responses:
@@ -17,7 +17,7 @@
 
 - name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating certificate"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
     {{ pki_cert_cnf | build_san(PKI_HC.san_mapping) }}
     sign-req {{ pki_cert_type }} {{ pki_cert_file }}"
     responses:
@@ -50,13 +50,13 @@
 
 - name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Exporting unencrypted key"
   ansible.builtin.expect:
-    command: "openssl {{ pki_cnf_subca.algo }} -in {{ pki_path_subca }}/private/{{ pki_cert_file }}.key
+    command: "openssl {{ pki_vars_subca.algo }} -in {{ pki_path_subca }}/private/{{ pki_cert_file }}.key
     -out {{ pki_path_subca }}/private/{{ pki_cert_file }}.unencrypted.key"
     responses:
       "Enter pass phrase": "{{ pki_cert_pwd }}"
   args:
     creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.unencrypted.key"
-#  no_log: true
+  no_log: true
   when:
     - not ansible_check_mode
     - pki_cert_cnf.export.unencrypted | default(pki_cnf_subca.export.unencrypted, true) | bool

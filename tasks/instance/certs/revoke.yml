@@ -1,34 +1,36 @@
 ---
 
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Checking if certificate exists"
+  ansible.builtin.stat:
+    path: "{{ pki_path_subca }}/issued/{{ pki_cert_file }}.crt"
+  register: pki_cert_revoke_file
+
 - name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Revoking certificate"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
     revoke {{ pki_cert_file }}"
     responses:
       "Continue": 'yes'
       "Enter pass phrase": "{{ pki_subca_pwd }}"
-      "Common Name": "{{ pki_cert_cnf.cn }}"
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
-  args:
-    creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.key"
   no_log: true
-  register: pki_cert_revoking
+  when: pki_cert_revoke_file.stat.exists
 
-- name: "{{ privilege_task_prefix }} | Setting CRL-Update Flag"
+- name: "{{ privilege_task_prefix }} | '{{ pki_cert_name }}' | Setting CRL-Update Flag"
   ansible.builtin.set_fact:
     pki_update_crl: true
   when:
     - not pki_update_crl
-    - pki_cert_revoking.changed
+    - pki_cert_revoke_file.stat.exists
 
-- name: "{{ privilege_task_prefix }} | Removing key files"
+- name: "{{ privilege_task_prefix }} | '{{ pki_cert_name }}' | Removing key files"
   ansible.builtin.file:
     path: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.{{ item }}"
     state: absent
   loop: ['p1', 'p7', 'p8', 'p12', 'unencrypted.key', 'key']
 
-- name: "{{ privilege_task_prefix }} | Removing certificate files"
+- name: "{{ privilege_task_prefix }} | '{{ pki_cert_name }}' | Removing certificate files"
   ansible.builtin.file:
     path: "{{ pki_path_subca }}/issued/{{ pki_cert_file }}.{{ item }}"
     state: absent

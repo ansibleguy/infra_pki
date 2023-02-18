@@ -2,11 +2,11 @@
 
 - name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Exporting P{{ pki_export_p }}-Format"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
     export-p{{ pki_export_p }} {{ pki_cert_file }}
     {% if pki_cert_no_pass | bool %}nopass{% endif %}"
     responses:
-      "Enter PEM pass phrase": "{{ pki_cert_pwd }}"
+      "Enter pass phrase": "{{ pki_cert_pwd }}"
       "Export Password": "{{ pki_cert_pwd }}"
       "Verify": "{{ pki_cert_pwd }}"
   environment:

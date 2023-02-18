@@ -39,7 +39,7 @@
     pki_path_base: "{{ pki_cnf.path_base }}/{{ pki_name }}"
     pki_path_ca: "{{ pki_path_base }}/{{ PKI_HC.dir.root_ca }}"
     task_prefix_pki: "PKI | Instance '{{ pki_name }}'"
-    pki_vars_file: "--vars={{ pki_path_ca }}/vars"
+    pki_vars_param: "--vars={{ pki_path_ca }}/vars"
   loop_control:
     loop_var: pki_item
   with_dict: "{{ PKI.instances }}"

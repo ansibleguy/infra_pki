@@ -20,6 +20,7 @@
   when:
     - PKI.save_passwords | bool
     - pki_all_cert_pwd_file.stat.exists
+    - pki_all_cert_pwd_file_raw.stdout | default(none, true) is not none  # update_privileges is creating an empty file
 
 - name: "{{ task_prefix_subca }} | PWD-Cert | Checking if Cert-password was provided"
   ansible.builtin.set_fact:
