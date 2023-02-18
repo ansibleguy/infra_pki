@@ -1,10 +1,5 @@
 ---
 
-- name: PKI | WORK IN PROGRESS
-  ansible.builtin.fail:
-    msg: "THIS ROLE IS STILL IN DEVELOPMENT! DO NOT USE!"
-  tags: molecule-notest
-
 - name: PKI | Checking config
   ansible.builtin.assert:
     that:

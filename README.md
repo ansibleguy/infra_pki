@@ -2,8 +2,6 @@
   <img src="https://github.com/ansibleguy/infra_pki/blob/latest/docs/pki.svg" alt="Public Key Infrastructure" width="600"/>
 </a>
 
-# WORK-IN-PROGRESS!!
-
 # Ansible Role - Public Key Infrastructure (PKI)
 
 Role to provision and manage one or multiple [PKI's](https://en.wikipedia.org/wiki/Public_key_infrastructure) on the target server.
