@@ -1,20 +1,20 @@
 ---
 
-- name: "{{ task_prefix_pki }} | PWD-SubCA | Checking if CA-key is available"
+- name: "{{ task_prefix_subca }} | PWD-SubCA | Checking if password-file is available"
   ansible.builtin.stat:
-    path: "{{ pki_path_subca }}/{{ PKI_HC.file.pwd }}"
+    path: "{{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
   register: pki_subca_pwd_file
   when: PKI.save_passwords | bool
 
-- name: "{{ task_prefix_pki }} | PWD-SubCA | Retrieving CA-password from file"
-  ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd }}"
+- name: "{{ task_prefix_subca }} | PWD-SubCA | Retrieving CA-password from file"
+  ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
   register: pki_subca_pwd_file_raw
   changed_when: false
   when:
     - PKI.save_passwords | bool
     - pki_subca_pwd_file.stat.exists
 
-- name: "{{ task_prefix_pki }} | PWD-SubCA | Setting CA-password to saved one"
+- name: "{{ task_prefix_subca }} | PWD-SubCA | Setting CA-password to saved one"
   ansible.builtin.set_fact:
     pki_subca_pwd: "{{ pki_subca_pwd_file_raw.stdout }}"
   when:
@@ -34,7 +34,8 @@
   when: pki_subca_pwd is undefined
   delegate_to: localhost
 
-- ansible.builtin.debug:
+- name: "{{ task_prefix_subca }} | PWD-SubCA | Debugging"
+  ansible.builtin.debug:
     msg: "{{ hostvars['localhost'] }}"
   when:
     - pki_subca_pwd is undefined
@@ -48,4 +49,4 @@
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Checking that password meets the requirements"
   ansible.builtin.assert:
     that:
-      - pki_ca_pwd | meets_password_complexity(PKI_HC)
+      - pki_subca_pwd | meets_password_complexity(PKI_HC)

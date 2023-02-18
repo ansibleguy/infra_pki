@@ -69,13 +69,12 @@ ansible-galaxy install -r requirements.yml
 * **Warning:** Not every setting/variable you provide will be checked for validity. Bad config might break the role!
 
 
-* **Note:** If you want to read more about (_x509_) certificates check out the [OpenSSL documentation](https://www.openssl.org/docs/man1.0.2/man5/x509v3_config.html).
+* **Note:** If you want to read more about PKI's and certificates:
 
-
-* **Note:** If you want to read a good explanation of how 'keyUsage' and 'extendedKeyUsage' are to be used - check out this StackExchange answer: [LINK](https://superuser.com/questions/738612/openssl-ca-keyusage-extension/1248085#1248085)
-
-
-* **Note:** If you want to know how to manually create a PKI/SubCA's using EasyRSA - check out [@QueuingKoala](https://gist.github.com/QueuingKoala)'s clean example on how to do that: [GitHub Gist](https://gist.github.com/QueuingKoala/e2c1c067a312384915b5) 
+  * The EasyRSA project has a [nice documentation](https://easy-rsa.readthedocs.io/en/latest/intro-to-PKI/)
+  * For (_x509_) certificates check out the [OpenSSL documentation](https://www.openssl.org/docs/man1.0.2/man5/x509v3_config.html).
+  * If you want to read a good explanation of how 'keyUsage' and 'extendedKeyUsage' are to be used - check out this StackExchange answer: [LINK](https://superuser.com/questions/738612/openssl-ca-keyusage-extension/1248085#1248085)
+  * If you want to know how to manually create a PKI/SubCA's using EasyRSA - check out [@QueuingKoala](https://gist.github.com/QueuingKoala)'s clean example on how to do that: [GitHub Gist](https://gist.github.com/QueuingKoala/e2c1c067a312384915b5) 
 
 
 * **Warning:** For gained security against CA-compromise you should:
@@ -125,11 +124,53 @@ ansible-galaxy install -r requirements.yml
     * lowercase letter
 
 
+* **Note:** **Certificates states** can be set to either:
+
+  * 'present' or 'created' to make sure a certificate exists
+  * 'absent' or 'revoked' to make sure a certificate does not exist
+  * 'renewed' to renew a certificate
+
+
 ## Usage
 
 ### Config
 
 Define the config as needed:
+
+#### Minimal setup
+
+```yaml
+    pki:
+      crl_distribution:
+        domain: 'crl.ansibleguy.net'
+
+      instances:
+        root:
+          pwd_ca: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            ...
+
+          sub_cas:
+            main:
+              pwd_ca: !vault |
+                $ANSIBLE_VAULT;1.1;AES256
+                ...
+
+              certs:
+                server:  # server certificates
+                  ansibleguy_net:
+                    cn: 'AnsibleGuy Website'
+                    san:
+                      dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                      ip: '135.181.170.217'
+                      uri: 'https://www-ansibleguy.net'
+
+                client:  # client certificates
+                  workstation1:
+                    cn: 'AnsibleGuy Workstation'
+```
+
+#### More detailed options
 
 ```yaml
 pki:
@@ -163,17 +204,57 @@ pki:
       sub_cas:
         internal:
           ca_cn: 'AnsibleGuy Internal SubCA'
+
+          pwd_ca: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            ...
+
+          cert_no_pass: false  # save private keys in encrypted format
+          pwd_cert: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            ...
+
           vars:
             key_size: 2048
-          
-          certs: {}
-          
+
+          export:  # different formats to export certificates to
+            p12: true
+            p7: true
+
+          certs:
+            server:  # server certificates
+              ansibleguy_net:
+                cn: 'AnsibleGuy Website'
+                san:  # subject-alternative-names
+                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                  ip: '135.181.170.217'
+                  uri: 'https://www-ansibleguy.net'
+
+              tester:
+                cn: 'AnsibleGuy Test Server'
+                san:
+                  dns: 'test.ansibleguy.net'
+                export:
+                  unencrypted: true  # creates 'server_tester.unencrypted.key'
+
+              old:
+                state: absent  # present/created/renewed/revoked/absent
+
+            email:  # mail certificates
+              guy:
+                cn: 'AnsibleGuy Mail'
+                san:
+                  email: 'guy@ansibleguy.net'
+
         vpn:
           ca_cn: 'AnsibleGuy VPN SubCA'
           vars:
             cert_expire: 365
 
-          certs: {}
+          certs:
+            client:  # client certificates
+              workstation1:
+                cn: 'AnsibleGuy Workstation 1'
 ```
 
 This is how the PKI is structured on the filesystem:
@@ -217,8 +298,10 @@ ansible-playbook -K -D -i inventory/hosts.yml playbook.yml
 ```
 
 There are also some useful **tags** available:
-* 
-*
+* certs => process certificates
+* create_certs => create non-existent certificates
+* renew_certs => renew certificates that have the state 'renewed' set
+* revoke_certs => revoke certificates that have the state 'revoked' or 'absent' set
 
 To debug errors - you can set the 'debug' variable at runtime:
 ```bash

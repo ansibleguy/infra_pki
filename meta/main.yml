@@ -6,11 +6,17 @@ galaxy_info:
   license: 'GPLv3'
   issue_tracker_url: 'https://github.com/ansibleguy/infra_pki/issues'
   min_ansible_version: 2.9.0
-  description: ''
+  description: "Ansible Role to provision and manage one or multiple PKI's on the target server"
   platforms:
     - name: Debian
       versions:
         - bullseye
-  galaxy_tags: []
+  galaxy_tags:
+    - 'certs'
+    - 'certificates'
+    - 'publickeyinfrastructure'
+    - 'pki'
+    - 'certificateauthority'
+    - 'ca'
 
 collections: []

@@ -14,9 +14,6 @@
 - name: "{{ task_prefix_subca }} | Init-SubCA | Getting CA password"
   ansible.builtin.include_tasks: pwd_ca.yml
 
-- name: "{{ task_prefix_subca }} | Init-SubCA | Getting SubCA password"
-  ansible.builtin.include_tasks: pwd_subca.yml
-
 - name: "{{ task_prefix_subca }} | Init-SubCA | Adding directory"
   ansible.builtin.file:
     path: "{{ pki_path_subca }}"
@@ -48,7 +45,7 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Initializing"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} init-pki soft"
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }} init-pki soft"
     responses:
       "Confirm removal": 'yes'
   environment:
@@ -56,7 +53,7 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Generating SubCA"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} build-ca subca"
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }} build-ca subca"
     responses:
       "Enter New CA Key Passphrase": "{{ pki_subca_pwd }}"
       "Confirm New CA Key Passphrase": "{{ pki_subca_pwd }}"
@@ -66,7 +63,10 @@
   no_log: true
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Importing SubCA request into CA"
-  ansible.builtin.command: "{{ PKI_SCRIPT }} import-req {{ pki_path_subca }}/reqs/ca.req subca_{{ pki_name_subca }}"
+  ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+  import-req {{ pki_path_subca }}/reqs/ca.req subca_{{ pki_name_subca }}"
+  vars:
+    pki_vars_file: "--vars={{ pki_path_ca }}/vars"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
   args:
@@ -74,10 +74,13 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Signing SubCA via CA"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} sign-req ca subca_{{ pki_name_subca }}"
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    sign-req ca subca_{{ pki_name_subca }}"
     responses:
       "Confirm": 'yes'
       "pass phrase": "{{ pki_ca_pwd }}"
+  vars:
+    pki_vars_file: "--vars={{ pki_path_ca }}/vars"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
   args:
@@ -95,7 +98,7 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Saving password"
   ansible.builtin.copy:
-    dest: "{{ pki_path_subca }}/{{ PKI_HC.file.pwd }}"
+    dest: "{{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
     content: "{{ pki_subca_pwd }}"
     mode: 0400
     owner: 'root'

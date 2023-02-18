@@ -1,13 +1,13 @@
 ---
 
-- name: "{{ task_prefix_pki }} | PWD-CA | Checking if CA-key is available"
+- name: "{{ task_prefix_pki }} | PWD-CA | Checking if password-file is available"
   ansible.builtin.stat:
-    path: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd }}"
+    path: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd_ca }}"
   register: pki_ca_pwd_file
   when: PKI.save_passwords | bool
 
 - name: "{{ task_prefix_pki }} | PWD-CA | Retrieving CA-password from file"
-  ansible.builtin.command: "cat {{ pki_path_ca }}/{{ PKI_HC.file.pwd }}"
+  ansible.builtin.command: "cat {{ pki_path_ca }}/{{ PKI_HC.file.pwd_ca }}"
   register: pki_ca_pwd_file_raw
   changed_when: false
   when:
@@ -34,7 +34,8 @@
   when: pki_ca_pwd is undefined
   delegate_to: localhost
 
-- ansible.builtin.debug:
+- name: "{{ task_prefix_subca }} | PWD-CA | Debugging"
+  ansible.builtin.debug:
     msg: "{{ hostvars['localhost'] }}"
   when:
     - pki_ca_pwd is undefined

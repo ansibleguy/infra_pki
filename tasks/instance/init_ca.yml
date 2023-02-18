@@ -49,7 +49,7 @@
 
 - name: "{{ task_prefix_pki }} | Init-CA | Initializing"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} init-pki soft"
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }} init-pki soft"
     responses:
       "Confirm removal": 'yes'
   environment:
@@ -57,7 +57,7 @@
 
 - name: "{{ task_prefix_pki }} | Init-CA | Generating CA"
   ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} build-ca"
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }} build-ca"
     responses:
       "Enter New CA Key Passphrase": "{{ pki_ca_pwd }}"
       "Confirm New CA Key Passphrase": "{{ pki_ca_pwd }}"
@@ -68,7 +68,7 @@
 
 - name: "{{ task_prefix_pki }} | Init-CA | Saving password"
   ansible.builtin.copy:
-    dest: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd }}"
+    dest: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd_ca }}"
     content: "{{ pki_ca_pwd }}"
     mode: 0400
     owner: 'root'

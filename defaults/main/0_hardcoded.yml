@@ -16,17 +16,13 @@ PKI_HC:
     privileges:
       public:
         dirs: ['issued', 'certs_by_serial']
-        files: ['ca.crt', 'crl.pem']
+        files: ['ca.crt', 'crl.pem', 'COPYING.md', 'gpl-2.0.txt']
       private:
-        dirs: ['private', 'revoked', 'reqs', 'x509-types']
-        files:
-          - 'serial'
-          - 'serial.old'
-          - 'vars'
-          - 'index.txt'
-          - 'index.txt.old'
-          - 'index.txt.attr'
-          - 'index.txt.attr.old'
+        dirs: ['private', 'revoked', 'reqs', 'x509-types', 'inline']
+        files: [
+          'serial', 'serial.old', 'vars', 'index.txt', 'index.txt.old', 'index.txt.attr',
+          'index.txt.attr.old', 'openssl-easyrsa.cnf', 'safessl-easyrsa.cnf',
+        ]
 
   dir:
     prefix_subca: 'subca_'
@@ -37,7 +33,8 @@ PKI_HC:
     script: '/usr/local/sbin'
 
   file:
-    pwd: '.ca.pwd'
+    pwd_ca: '.ca.pwd'
+    pwd_cert: '.cert.pwd'
     crl: 'crl.pem'
     ca: 'ca.crt'
 
@@ -49,5 +46,11 @@ PKI_HC:
     digest: ['md5', 'sha1', 'sha256', 'sha224', 'sha384', 'sha512']
 
   fallback_timezone: 'GMT'
+  san_mapping: {'dns': 'DNS', 'uri': 'URI', 'email': 'email', 'other': 'otherName', 'dir': 'dirName'}
+  cert:
+    states:
+      create: ['renewed', 'present', 'created']
+      revoke: ['renewed', 'revoked', 'absent']
+    types: ['server', 'client', 'email', 'code-signing']
 
 PKI_VENV: "{{ PKI_HC.path.venv }}/bin/activate"

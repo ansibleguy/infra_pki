@@ -10,6 +10,7 @@
     that:
       - pki is defined
       - PKI.instances is defined
+      - PKI.instances | is_dict
       - PKI.instances | length > 0
       - PKI.crl_distribution.domain is defined
       - PKI.crl_distribution.domain | valid_domain
@@ -31,13 +32,14 @@
   vars:
     pki_name: "{{ pki_item.key | safe_key }}"
     pki_cnf: "{{ defaults_instance | combine(pki_item.value, recursive=true) }}"
-    pki_vars: "{{ defaults_vars | 
-    combine(defaults_vars_root_ca, recursive=true) | 
-    combine(PKI.vars, recursive=true) | 
+    pki_vars: "{{ defaults_vars |
+    combine(defaults_vars_root_ca, recursive=true) |
+    combine(PKI.vars, recursive=true) |
     combine(pki_cnf.vars, recursive=true) }}"
     pki_path_base: "{{ pki_cnf.path_base }}/{{ pki_name }}"
     pki_path_ca: "{{ pki_path_base }}/{{ PKI_HC.dir.root_ca }}"
     task_prefix_pki: "PKI | Instance '{{ pki_name }}'"
+    pki_vars_file: "--vars={{ pki_path_ca }}/vars"
   loop_control:
     loop_var: pki_item
   with_dict: "{{ PKI.instances }}"

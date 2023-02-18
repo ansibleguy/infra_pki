@@ -15,12 +15,34 @@
           sub_cas:
             sub1:
               pwd_ca: 'tEst54321'
+              pwd_cert: 'teSt32521'
+              cert_no_pass: false
+
               certs:
                 server:
                   ansibleguy_net:
                     cn: 'AnsibleGuy Website'
-                    dns: ['www.ansibleguy.net', 'ansibleguy.net']
-                    ip: ['135.181.170.217']
+                    export:
+                      unencrypted: true
+                      p12: true
+                    san:
+                      dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                      ip: '135.181.170.217'
+                      uri: 'https://www-ansibleguy.net'
+
+                  test2:
+
+                client:
+                  wkst1:
+                    cn: 'Workstation 1'
+                  test2:
+                    state: 'absent'
+
+                email:
+                  guy:
+                    cn: 'AnsibleGuy Mail'
+                    san:
+                      email: 'guy@ansibleguy.net'
 
   roles:
     - ansibleguy.infra_pki

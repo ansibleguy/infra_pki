@@ -75,6 +75,26 @@ defaults_subca:  # > pki_cnf_subca
   vars: {}
   extensions: {}
   certs: {}
+  cert_no_pass: true
+  export:
+    unencrypted: false
+    chain: true
+    pkcs1: false
+    pkcs7: false
+    pkcs8: false
+    pkcs12: true
+
+defaults_cert:
+  state: 'present'
+  no_pass:
+  export:
+    unencrypted:
+    chain:
+    pkcs1:
+    pkcs7:
+    pkcs8:
+    pkcs12:
+  cn: "Auto-Generated Certificate - {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
 
 PKI_SCRIPT: "{{ PKI_HC.path.script }}/easyrsa"
 PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}/{{ PKI.easyrsa_version }}"

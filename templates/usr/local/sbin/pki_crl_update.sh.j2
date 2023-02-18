@@ -8,7 +8,7 @@
 EASYRSA="{{ PKI_SCRIPT }}"
 OWNER="{{ pki_cnf.owner }}"
 GROUP="{{ pki_cnf.group_read }}"
-FILE_PWD="{{ PKI_HC.file.pwd }}"
+FILE_PWD="{{ PKI_HC.file.pwd_ca }}"
 FILE_CRL="{{ PKI_HC.file.crl }}"
 
 function gen_crl {

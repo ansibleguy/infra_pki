@@ -1,2 +1,63 @@
 ---
 
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating request"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    gen-req {{ pki_cert_file }}
+    {% if pki_cert_no_pass | bool %}nopass{% endif %}"
+    responses:
+      "Enter PEM pass phrase": "{{ pki_cert_pwd }}"
+      "Verifying": "{{ pki_cert_pwd }}"
+      "Common Name": "{{ pki_cert_cnf.cn }}"
+  environment:
+    EASYRSA_PKI: "{{ pki_path_subca }}"
+  args:
+    creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.key"
+  no_log: true
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating certificate"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }}
+    {{ pki_cert_cnf | build_san(PKI_HC.san_mapping) }}
+    sign-req {{ pki_cert_type }} {{ pki_cert_file }}"
+    responses:
+      "Confirm": 'yes'
+      "Enter pass phrase": "{{ pki_subca_pwd }}"
+  environment:
+    EASYRSA_PKI: "{{ pki_path_subca }}"
+  args:
+    creates: "{{ pki_path_subca }}/issued/{{ pki_cert_file }}.crt"
+  no_log: true
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating certificate chain"
+  ansible.builtin.shell: "cat {{ pki_path_ca }}/{{ PKI_HC.file.ca }}
+    {{ pki_path_subca }}/{{ PKI_HC.file.ca }}
+    {{ pki_path_subca }}/issued/{{ pki_cert_file }}.crt >
+    {{ pki_path_subca }}/issued/{{ pki_cert_file }}.chain.crt"
+  args:
+    creates: "{{ pki_path_subca }}/issued/{{ pki_cert_file }}.chain.crt"
+  when: pki_cert_cnf.export.chain | default(pki_cnf_subca.export.chain, true) | bool
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Exporting in P-formats"
+  ansible.builtin.include_tasks: create_pN.yml
+  when: >
+    not ansible_check_mode and
+    (pki_cert_cnf.export['p' + pki_export_p] | default(pki_cnf_subca.export['p' + pki_export_p], true) | default(false) | bool or
+    pki_cert_cnf.export['pkcs' + pki_export_p] | default(pki_cnf_subca.export['pkcs' + pki_export_p], true) | bool)
+  loop_control:
+    loop_var: pki_export_p
+  loop: ['1', '7', '8', '12']
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Exporting unencrypted key"
+  ansible.builtin.expect:
+    command: "openssl {{ pki_cnf_subca.algo }} -in {{ pki_path_subca }}/private/{{ pki_cert_file }}.key
+    -out {{ pki_path_subca }}/private/{{ pki_cert_file }}.unencrypted.key"
+    responses:
+      "Enter pass phrase": "{{ pki_cert_pwd }}"
+  args:
+    creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.unencrypted.key"
+#  no_log: true
+  when:
+    - not ansible_check_mode
+    - pki_cert_cnf.export.unencrypted | default(pki_cnf_subca.export.unencrypted, true) | bool
+    - not pki_cert_no_pass | bool

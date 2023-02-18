@@ -6,6 +6,13 @@
     check_vars: "{{ pki_vars_subca }}"
     check_task_prefix: "{{ task_prefix_subca }}"
 
+- name: "{{ task_prefix_subca }} | Getting SubCA password"
+  ansible.builtin.include_tasks: pwd_subca.yml
+  tags: always
+  args:
+    apply:
+      tags: always
+
 - name: "{{ task_prefix_subca }} | Checking if SubCA is initialized"
   ansible.builtin.stat:
     path: "{{ pki_path_subca }}/{{ PKI_HC.file.ca }}"
@@ -29,12 +36,21 @@
 
 - name: "{{ task_prefix_subca }} | Processing certificates"
   ansible.builtin.include_tasks: certs/main.yml
-  vars:
-    pki_cert_types: "{{ pki_cnf_subca.certs }}"
   tags: always
   args:
     apply:
       tags: [certs, renew_certs, create_certs, revoke_certs]
+
+- name: "{{ task_prefix_subca }} | Updating CRL"
+  ansible.builtin.include_tasks: update_crl.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"
+    crl_task_prefix: "{{ task_prefix_subca }}"
+  when: pki_update_crl | bool
+  tags: always
+  args:
+    apply:
+      tags: always
 
 - name: "{{ task_prefix_subca }} | Updating privileges"
   ansible.builtin.include_tasks: update_privileges.yml
@@ -42,3 +58,6 @@
     easyrsa_base: "{{ pki_path_subca }}"
     privilege_task_prefix: "{{ task_prefix_subca }}"
   tags: always
+  args:
+    apply:
+      tags: always

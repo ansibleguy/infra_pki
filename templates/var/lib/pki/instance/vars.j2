@@ -6,7 +6,7 @@
 set_var EASYRSA "{{ PKI_SCRIPT | dirname }}"
 set_var EASYRSA_PKI "{{ easyrsa_base }}"
 set_var EASYRSA_EXT_DIR "$EASYRSA_PKI/x509-types"
-set_var EASYRSA_SSL_CONF "$EASYRSA/openssl-easyrsa.cnf"
+set_var EASYRSA_SSL_CONF "$EASYRSA_PKI/openssl-easyrsa.cnf"
 
 # variables
 

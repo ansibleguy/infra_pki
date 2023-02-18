@@ -1,4 +1,12 @@
 ---
 
-- name: "{{ crl_update_task_prefix }} | Updating CRL"
-
+- name: "{{ crl_task_prefix }} | Updating CRL"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_file }} gen-crl"
+    responses:
+      "Enter New CA Key Passphrase": "{{ pki_subca_pwd }}"
+      "Confirm New CA Key Passphrase": "{{ pki_subca_pwd }}"
+      "Common Name": "{{ pki_cnf_subca.ca_cn }}"
+  environment:
+    EASYRSA_PKI: "{{ pki_path_subca }}"
+  no_log: true

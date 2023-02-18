@@ -1,6 +1,19 @@
 ---
 
-# todo: pull existing certs to compare against config
+- name: "{{ task_prefix_subca }} | Certs | Checking config"
+  ansible.builtin.assert:
+    that:
+      - pki_cnf_subca.certs | is_dict
+
+- name: "{{ task_prefix_subca }} | Certs | Certificate password"
+  ansible.builtin.include_tasks: pwd.yml
+  when: not pki_cnf_subca.cert_no_pass | bool
+  tags: always
+  args:
+    apply:
+      tags: [certs, renew_certs, create_certs, revoke_certs]
+
+# todo: pull existing certs to compare against config for purging
 
 - name: "{{ task_prefix_subca }} | Certs | Processing certificate types"
   ansible.builtin.include_tasks: types.yml
@@ -14,4 +27,5 @@
     task_prefix_certs: "{{ task_prefix_subca }} | Certs | {{ pki_cert_type }}"
   loop_control:
     loop_var: pki_cert_type_item
-  with_dict: "{{ pki_cert_types }}"
+  with_dict: "{{ pki_cnf_subca.certs }}"
+  no_log: true

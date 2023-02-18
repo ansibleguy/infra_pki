@@ -1,0 +1,24 @@
+---
+
+- name: "{{ task_prefix_cert }} | Checking that password meets the requirements"
+  ansible.builtin.assert:
+    that:
+      - pki_cert_pwd | meets_password_complexity(PKI_HC)
+  when: not pki_cert_no_pass | bool
+  tags: always
+
+- name: "{{ task_prefix_cert }} | Revoking certificate"
+  ansible.builtin.include_tasks: revoke.yml
+  when: "pki_cert_cnf.state in PKI_HC.cert.states.revoke"
+  tags: [certs, renew_certs, revoke_certs]
+  args:
+    apply:
+      tags: [certs, renew_certs, revoke_certs]
+
+- name: "{{ task_prefix_cert }} | Creating certificate"
+  ansible.builtin.include_tasks: create.yml
+  when: "pki_cert_cnf.state in PKI_HC.cert.states.create"
+  tags: [certs, renew_certs, create_certs]
+  args:
+    apply:
+      tags: [certs, renew_certs, create_certs]

@@ -10,6 +10,9 @@ class FilterModule(object):
             "safe_key": self.safe_key,
             "valid_domain": self.valid_domain,
             "meets_password_complexity": self.meets_password_complexity,
+            "build_san": self.build_san,
+            "ensure_list": self.ensure_list,
+            "is_dict": self.is_dict,
         }
 
     @staticmethod
@@ -36,3 +39,34 @@ class FilterModule(object):
             regex_search(r'[A-Z]', pwd) is not None,
         ]
         return all(tests)
+
+    @staticmethod
+    def ensure_list(data: (str, dict, list)) -> list:
+        # if user supplied a string instead of a list => convert it to match our expectations
+        if isinstance(data, list):
+            return data
+
+        return [data]
+
+    @classmethod
+    def build_san(cls, cert: dict, san_mapping: dict) -> str:
+        san = []
+
+        if 'san' in cert:
+            for ansible_key, openssl_key in san_mapping.items():
+                if ansible_key in cert['san']:
+                    for entry in cls.ensure_list(cert['san'][ansible_key]):
+                        san.append(f'{openssl_key}:{entry}')
+
+                if openssl_key in cert['san']:
+                    for entry in cls.ensure_list(cert['san'][openssl_key]):
+                        san.append(f'{openssl_key}:{entry}')
+
+        if len(san) == 0:
+            return ''
+
+        return f"--subject-alt-name=\"{','.join(san)}\""
+
+    @staticmethod
+    def is_dict(data) -> bool:
+        return isinstance(data, dict)

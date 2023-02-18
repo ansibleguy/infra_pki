@@ -4,6 +4,7 @@
   ansible.builtin.assert:
     that:
       - pki_cnf.sub_cas is defined
+      - pki_cnf.sub_cas | is_dict
       - pki_cnf.sub_cas | length > 0
 
 - name: "{{ task_prefix_pki }} | Validating vars"
@@ -51,11 +52,13 @@
   vars:
     pki_name_subca: "{{ pki_subca_item.key | safe_key }}"
     pki_cnf_subca: "{{ defaults_subca | combine(pki_subca_item.value, recursive=true) }}"
-    pki_vars_subca: "{{ defaults_vars | 
-    combine(PKI.vars, recursive=true) | 
+    pki_vars_subca: "{{ defaults_vars |
+    combine(PKI.vars, recursive=true) |
     combine(pki_cnf_subca.vars, recursive=true) }}"
     pki_path_subca: "{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
     task_prefix_subca: "{{ task_prefix_pki }} | SubCA '{{ pki_name_subca }}'"
+    pki_vars_file: "--vars={{ pki_path_subca }}/vars"
+    pki_update_crl: false
   loop_control:
     loop_var: pki_subca_item
   with_dict: "{{ pki_cnf.sub_cas }}"
