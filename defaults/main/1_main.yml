@@ -7,6 +7,7 @@ debug: false
 defaults_pki:
   manage:
     users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
+    webserver: true  # install and configure a nginx webserver to serve CRL's and CA-PublicKey's
 
   save_passwords: true
   purge: false  # remove certificates that exist on the CA but not in your config
@@ -16,7 +17,6 @@ defaults_pki:
     protocol: 'http'
 
   mode_public: '0640'  # or 0644
-  timezone:
   easyrsa_version: '3.1.2'
 
   vars: {}

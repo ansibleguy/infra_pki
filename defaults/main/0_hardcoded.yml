@@ -5,13 +5,7 @@ PKI_HC:
     path:
       template: '/var/lib/easyrsa_template'  # version number = sub-directory
     dl: 'https://github.com/OpenVPN/easy-rsa/releases/download'
-    vars_ignore:
-      - 'temp_dir'
-      - 'ext_dir'
-      - 'no_pass'
-      - 'ssl_conf'
-      - 'batch'
-      - 'pki'
+    vars_ignore: ['temp_dir', 'ext_dir', 'no_pass', 'ssl_conf', 'batch', 'pki']
     pwd_min_length: 8
     privileges:
       public:
@@ -45,12 +39,9 @@ PKI_HC:
     algo: ['rsa', 'ec', 'ed']
     digest: ['md5', 'sha1', 'sha256', 'sha224', 'sha384', 'sha512']
 
-  fallback_timezone: 'GMT'
   san_mapping: {'dns': 'DNS', 'uri': 'URI', 'email': 'email', 'other': 'otherName', 'dir': 'dirName'}
   cert:
     states:
       create: ['renewed', 'present', 'created']
       revoke: ['renewed', 'revoked', 'absent']
     types: ['server', 'client', 'email', 'code-signing']
-
-PKI_VENV: "{{ PKI_HC.path.venv }}/bin/activate"

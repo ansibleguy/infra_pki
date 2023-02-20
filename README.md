@@ -39,22 +39,43 @@ ansible-galaxy install -r requirements.yml
 
 
 * **Configuration**
-  * 
+  * Usage of a group to allow read-only access to public-keys
 
 
   * **Default config**:
-    * Expiration:
-      * Root-CA: 20 years
-      * Sub-CA: 15 years
-      * Certificates: 3 years
+    * Paths:
+      * PKI base: '/var/lib/pki'
+      * Script: '/usr/local/sbin/easyrsa'
+    * PKI user: 'pki'
+    * Read-only group: 'pki_read'
+    * **EasyRSA vars**:
+      * Expiration:
+        * Root-CA: 20 years
+        * Sub-CA: 15 years
+        * Certificates: 3 years
+      * Digest:
+        * Root-CA: sha512
+        * Sub-CA/Certificates: sha256
+      * Algorithm: rsa
+      * Key size: 4096
+    * Certificates:
+      * Don't password-encrypt certificate private-keys
+      * Export formats:
+        * pkcs12 (_private/<cert>.p12_)
+        * certificate chain (_issued/<cert>.chain.crt_)
  
 
   * **Default opt-ins**:
-    * 
+    * Adding dedicated PKI-user and read-only group
+    * Saving CA/Sub-CA/Certificate passwords to files for easier automation
+      * See the information below for alternatives
+    * Installation and configuration of a Nginx webserver to server CRL's and CA-PublicKey's (_not yet implemented_)
 
 
   * **Default opt-outs**:
-    * 
+    * Purging of orphaned (_existing but not configured_) certificates
+    * Encryption of certificate private-keys (_non CA/Sub-CA_)
+
 
 ## Info
 
@@ -87,7 +108,7 @@ ansible-galaxy install -r requirements.yml
       ```
 
 
-* **Note:** You have multiple options to supply the CA/SubCA/Certificate passwords:
+* **Note:** You have multiple options to supply the CA/Sub-CA/Certificate passwords:
 
   * if 'save_passwords' is set to true - the saved password will be retrieved after the CA is initialized
   * as inventory variable (_ansible-vault encrypted to be decrypted at runtime_)
@@ -113,7 +134,7 @@ ansible-galaxy install -r requirements.yml
 * **Note:** The 'cert_expire' variable of the root-ca will set the runtime of the sub-ca's!
 
 
-* **Note:** Passwords used for CA/SubCA/Certificate encryption are checked for complexity rules:
+* **Note:** Passwords used for CA/Sub-CA/Certificate encryption are checked for complexity rules:
 
   * min. 8 characters long
   * must contain
@@ -138,34 +159,34 @@ Define the config as needed:
 #### Minimal setup
 
 ```yaml
-    pki:
-      crl_distribution:
-        domain: 'crl.ansibleguy.net'
+pki:
+  crl_distribution:
+    domain: 'crl.ansibleguy.net'
 
-      instances:
-        root:
+  instances:
+    root:
+      pwd_ca: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        ...
+
+      sub_cas:
+        main:
           pwd_ca: !vault |
             $ANSIBLE_VAULT;1.1;AES256
             ...
 
-          sub_cas:
-            main:
-              pwd_ca: !vault |
-                $ANSIBLE_VAULT;1.1;AES256
-                ...
+          certs:
+            server:  # server certificates
+              ansibleguy_net:
+                cn: 'AnsibleGuy Website'
+                san:
+                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                  ip: '135.181.170.217'
+                  uri: 'https://www-ansibleguy.net'
 
-              certs:
-                server:  # server certificates
-                  ansibleguy_net:
-                    cn: 'AnsibleGuy Website'
-                    san:
-                      dns: ['www.ansibleguy.net', 'ansibleguy.net']
-                      ip: '135.181.170.217'
-                      uri: 'https://www-ansibleguy.net'
-
-                client:  # client certificates
-                  workstation1:
-                    cn: 'AnsibleGuy Workstation'
+            client:  # client certificates
+              workstation1:
+                cn: 'AnsibleGuy Workstation'
 ```
 
 #### More detailed options
@@ -180,7 +201,6 @@ pki:
   crl_distribution:
     domain: 'crl.ansibleguy.net'  # domain that will be added to all certificates as CRL-distribution-point
     protocol: 'http'
-  timezone: 'Europe/Vienna'
   
   vars:
     req_country: 'AT'

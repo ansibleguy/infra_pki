@@ -16,9 +16,6 @@
     name: "{{ PKI_HC.requirements }}"
     state: present
 
-- name: PKI | Time
-  ansible.builtin.import_tasks: time.yml
-
 - name: PKI | EasyRSA
   ansible.builtin.import_tasks: easyrsa.yml
 
