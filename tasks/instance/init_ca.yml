@@ -9,14 +9,14 @@
     shell: '/bin/bash'
     comment: 'ansibleguy.infra_pki - owner of CA/PKI'
     state: present
-  when: PKI.manage.users
+  when: PKI.manage.users | bool
 
 - name: "{{ task_prefix_pki }} | Init-CA | Adding CA-Groups"
   ansible.builtin.group:
     name: "{{ item }}"
     state: present
   loop: ["{{ pki_cnf.group }}", "{{ pki_cnf.group_read }}"]
-  when: PKI.manage.users
+  when: PKI.manage.users | bool
 
 - name: "{{ task_prefix_pki }} | Init-CA | Adding directory"
   ansible.builtin.file:
