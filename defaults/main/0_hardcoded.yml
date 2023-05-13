@@ -45,3 +45,5 @@ PKI_HC:
       create: ['renewed', 'present', 'created']
       revoke: ['renewed', 'revoked', 'absent']
     types: ['server', 'client', 'email', 'code-signing']
+
+PKI_SCRIPT: "{{ PKI_HC.path.script }}/easyrsa"

@@ -23,8 +23,6 @@ defaults_pki:
   instances: {}
   extensions: {}
 
-PKI: "{{ defaults_pki | combine(pki, recursive=true) }}"
-
 defaults_instance:  # > pki_cnf
   ca_cn: 'Auto-Generated CA'
   path_base: '/var/lib/pki'
@@ -95,6 +93,3 @@ defaults_cert:
     pkcs8:
     pkcs12:
   cn: "Auto-Generated Certificate - {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
-
-PKI_SCRIPT: "{{ PKI_HC.path.script }}/easyrsa"
-PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}/{{ PKI.easyrsa_version }}"

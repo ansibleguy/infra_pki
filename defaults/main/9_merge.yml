@@ -1,0 +1,4 @@
+---
+
+PKI: "{{ defaults_pki | combine(pki, recursive=true) }}"
+PKI_TMPL: "{{ PKI_HC.easyrsa.path.template }}/{{ PKI.easyrsa_version }}"
