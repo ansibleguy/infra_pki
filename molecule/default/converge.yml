@@ -44,5 +44,7 @@
                     san:
                       email: 'guy@ansibleguy.net'
 
+                serverClient: {}  # special cases where application has to use same cert for server & client connections
+
   roles:
     - ansibleguy.infra_pki

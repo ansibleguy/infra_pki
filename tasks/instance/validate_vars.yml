@@ -6,3 +6,4 @@
       - check_vars.key_size | string in PKI_HC.options.key_size
       - check_vars.algo in PKI_HC.options.algo
       - check_vars.digest in PKI_HC.options.digest
+  tags: always

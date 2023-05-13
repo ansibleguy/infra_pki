@@ -51,3 +51,4 @@
   ansible.builtin.assert:
     that:
       - pki_all_cert_pwd_file | meets_password_complexity(PKI_HC)
+  tags: always

@@ -50,3 +50,4 @@
   ansible.builtin.assert:
     that:
       - pki_subca_pwd | meets_password_complexity(PKI_HC)
+  tags: always

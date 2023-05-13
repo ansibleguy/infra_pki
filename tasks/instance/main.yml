@@ -6,6 +6,7 @@
       - pki_cnf.sub_cas is defined
       - pki_cnf.sub_cas | is_dict
       - pki_cnf.sub_cas | length > 0
+  tags: always
 
 - name: "{{ task_prefix_pki }} | Validating vars"
   ansible.builtin.include_tasks: validate_vars.yml

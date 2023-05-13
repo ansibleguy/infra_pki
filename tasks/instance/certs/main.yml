@@ -4,6 +4,7 @@
   ansible.builtin.assert:
     that:
       - pki_cnf_subca.certs | is_dict
+  tags: always
 
 - name: "{{ task_prefix_subca }} | Certs | Certificate password"
   ansible.builtin.include_tasks: pwd.yml
