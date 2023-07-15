@@ -1,12 +1,14 @@
 # {{ ansible_managed }}
 # ansibleguy.infra_pki
 
-{% if 'crlDistributionPoints' not in pki_extensions %}
+{% if PKI.crl_distribution.enable | bool %}
+{%   if 'crlDistributionPoints' not in pki_extensions %}
 crlDistributionPoints = URI:{{ PKI.crl_distribution.protocol }}://{{ PKI.crl_distribution.domain }}/{{ PKI_HC.file.crl }}
-{% endif %}
+{%   endif %}
 
-{% if 'authorityInfoAccess' not in pki_extensions %}
+{%   if 'authorityInfoAccess' not in pki_extensions %}
 authorityInfoAccess = caIssuers;URI:{{ PKI.crl_distribution.protocol }}://{{ PKI.crl_distribution.domain }}/{{ PKI_HC.file.ca }}
+{%   endif %}
 {% endif %}
 
 {% if pki_extensions | length > 0 %}

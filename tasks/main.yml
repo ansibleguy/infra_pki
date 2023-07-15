@@ -7,8 +7,8 @@
       - PKI.instances is defined
       - PKI.instances | is_dict
       - PKI.instances | length > 0
-      - PKI.crl_distribution.domain is defined
-      - PKI.crl_distribution.domain | valid_domain
+      - not PKI.crl_distribution.enable | bool or PKI.crl_distribution.domain is defined
+      - not PKI.crl_distribution.enable | bool or PKI.crl_distribution.domain | valid_domain
       - PKI.mode_public | string in ['0644', '0640']
   tags: always
 

@@ -13,6 +13,7 @@ defaults_pki:
   purge: false  # remove certificates that exist on the CA but not in your config
 
   crl_distribution:
+    enable: true
     domain:
     protocol: 'http'
 
