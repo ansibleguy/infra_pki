@@ -27,7 +27,7 @@
   ansible.builtin.template:
     src: 'templates/var/lib/pki/instance/vars.j2'
     dest: "{{ pki_path_ca }}/vars"
-    mode: 0640
+    mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
   vars:
@@ -38,10 +38,12 @@
   ansible.builtin.template:
     src: 'templates/var/lib/pki/instance/x509-types/COMMON.j2'
     dest: "{{ pki_path_ca }}/x509-types/COMMON"
-    mode: 0640
+    mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
   vars:
+    pki_crl_distribution: "{{ PKI.crl_distribution | combine(pki_cnf.crl_distribution) }}"
+    pki_crl_prefix: 'ca'
     pki_extensions: "{{ PKI.extensions |
     combine(pki_cnf.extensions, recursive=true) }}"
 

@@ -20,12 +20,18 @@ defaults_pki:
   mode_public: '0640'  # or 0644
   easyrsa_version: '3.1.2'
 
+  backup:
+    enable: true
+    path: '/var/backups/pki'
+    service: 'backup-pki'
+    time: 'Sun 00:00'
+
   vars: {}
   instances: {}
   extensions: {}
 
 defaults_instance:  # > pki_cnf
-  ca_cn: 'Auto-Generated CA'
+  ca_cn: 'Root CA'
   path_base: '/var/lib/pki'
   owner: 'pki'
   group: 'pki'
@@ -33,6 +39,7 @@ defaults_instance:  # > pki_cnf
   pwd_ca:
   vars: {}
   extensions: {}
+  crl_distribution: {}
 
 defaults_vars:  # > pki_vars & > pki_vars_subca
   # if value is set to {none}, 'none', '' or ' ' the variable will be ignored
@@ -45,9 +52,9 @@ defaults_vars:  # > pki_vars & > pki_vars_subca
   req_ou: ''
 
   key_size: 4096  # 1024, 2048, 4096, 8192
-  algo: 'rsa'  # rsa, ec, ed
+  algo: 'ec'  # rsa, ec, ed; WARNING: ed not tested!
   digest: 'sha256'  # md5, sha1, sha256, sha224, sha384, sha512
-  curve: 'secp384r1'
+  curve: 'secp384r1'  # used for 'ec' and 'ed' algos
 
   ca_expire: 7300  # 20 years
   cert_expire: 1095  # 3 years
@@ -58,7 +65,7 @@ defaults_vars:  # > pki_vars & > pki_vars_subca
   rand_sn: 'yes'
   fix_offset:  # 1-365
   ns_support: 'no'
-  ns_comment: 'Auto-Generated Certificate'
+  ns_comment: 'Certificate'
 
   # will be ignored: 'no_pass', 'temp_dir', 'ext_dir', 'ssl_conf', 'batch'
 
@@ -69,17 +76,18 @@ defaults_vars_root_ca:  # > pki_vars
   digest: 'sha512'
 
 defaults_subca:  # > pki_cnf_subca
-  ca_cn: 'Auto-Generated Sub-CA'
+  ca_cn: 'SubCA'
   pwd_ca:
   vars: {}
   extensions: {}
   certs: {}
+  crl_distribution: {}
   cert_no_pass: true
   export:
     unencrypted: false
-    chain: true
+    chain: true  # todo: switch to false not working (?)
     pkcs1: false
-    pkcs7: false
+    pkcs7: false  # p7b
     pkcs8: false
     pkcs12: true
 

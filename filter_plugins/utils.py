@@ -13,6 +13,7 @@ class FilterModule(object):
             "build_san": self.build_san,
             "ensure_list": self.ensure_list,
             "is_dict": self.is_dict,
+            "unique_bases": self.unique_bases,
         }
 
     @staticmethod
@@ -70,3 +71,15 @@ class FilterModule(object):
     @staticmethod
     def is_dict(data) -> bool:
         return isinstance(data, dict)
+
+    @staticmethod
+    def unique_bases(instances: dict, default: str) -> list:
+        bases = []
+
+        for i in instances:
+            if 'path_base' in i:
+                bases.append(i['path_base'])
+            else:
+                bases.append(default)
+
+        return list(set(bases))

@@ -3,11 +3,117 @@
 - name: Verify
   hosts: all
   gather_facts: false
-  tasks: []
-  #  - name: Checking if zoneminder web-service is reachable
-  #    ansible.builtin.uri:
-  #      url: 'https://192.168.0.2'
-  #      return_content: yes
-  #      validate_certs: false
-  #    register: page
-  #    failed_when: "'Zoneminder' not in page.content"
+  vars:
+    pki_base: '/var/lib/pki'
+    t1ca: "{{ pki_base }}/test1/ca"
+    t1sub1: "{{ pki_base }}/test1/subca_sub1"
+    t1sub2: "{{ pki_base }}/test1/subca_sub2"
+    t2ca: "{{ pki_base }}/test2/ca"
+    t2sub1: "{{ pki_base }}/test2/subca_sub1"
+
+  tasks:
+    - name: Performing backup
+      ansible.builtin.systemd:
+        name: 'backup-pki.service'
+        state: started
+
+    - name: Checking certificate existence
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: test_cert_file
+      failed_when: not test_cert_file.stat.exists
+      loop:
+        # instance 1
+        - "{{ t1ca }}/ca.crt"
+        - "{{ t1ca }}/private/ca.key"
+        ## sub-ca 1
+        ### defaults
+        - "{{ t1sub1 }}/ca.crt"
+        - "{{ t1sub1 }}/private/ca.key"
+        - "{{ t1sub1 }}/issued/server_test2.chain.crt"
+        - "{{ t1sub1 }}/private/server_test2.p12"
+        - "{{ t1sub1 }}/issued/server_test2.crt"
+        - "{{ t1sub1 }}/private/server_test2.key"
+        - "{{ t1sub1 }}/issued/client_wkst1.crt"
+        - "{{ t1sub1 }}/private/client_wkst1.key"
+        - "{{ t1sub1 }}/issued/email_guy.crt"
+        - "{{ t1sub1 }}/private/email_guy.key"
+        - "{{ t1sub1 }}/private/server_ansibleguynet.p12"
+        - "{{ t1sub1 }}/issued/server_ansibleguynet.crt"
+        - "{{ t1sub1 }}/private/server_ansibleguynet.key"
+        ### custom configured
+        - "{{ t1sub1 }}/private/server_ansibleguynet.unencrypted.key"
+        # sub-ca 2
+        ### defaults
+        - "{{ t1sub2 }}/ca.crt"
+        - "{{ t1sub2 }}/private/ca.key"
+        - "{{ t1sub2 }}/issued/server_random1.crt"
+        - "{{ t1sub2 }}/issued/server_random1.chain.crt"
+        - "{{ t1sub2 }}/private/server_random1.key"
+        - "{{ t1sub2 }}/private/server_random1.p12"
+        ### custom configured
+        # - "{{ t1sub2 }}/private/server_random1.p1"
+        - "{{ t1sub2 }}/issued/server_random1.p7b"
+        - "{{ t1sub2 }}/private/server_random1.p8"
+        # instance 2
+        - "{{ t2ca }}/ca.crt"
+        - "{{ t2ca }}/private/ca.key"
+        - "{{ t2sub1 }}/ca.crt"
+        - "{{ t2sub1 }}/private/ca.key"
+
+    - name: Checking certificate absence
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: test_cert_file
+      failed_when: test_cert_file.stat.exists
+      loop:
+        # instance 1
+        - "{{ t1sub1 }}/private/server_test2.p1"
+        - "{{ t1sub1 }}/issued/server_test2.p7b"
+        - "{{ t1sub1 }}/private/server_test2.p8"
+        - "{{ t1sub1 }}/private/server_test2.unencrypted.key"
+        # sub-ca 2
+        - "{{ t1sub2 }}/private/server_random1.unencrypted.key"
+        # - "{{ t1sub2 }}/issued/serverClient_random2.chain.crt"  # todo: not working
+        # - "{{ t1sub2 }}/private/serverClient_random2.p12"  # todo: not working
+
+    - name: Checking certificate content
+      ansible.builtin.shell: |
+        set -o pipefail
+        openssl x509 -in {{ item.file }} -text | grep -q '{{ item.find }}'
+      changed_when: false
+      args:
+        executable: '/bin/bash'
+      with_items:
+        # instance 1
+        - {file: "{{ t1ca }}/ca.crt", find: 'Signature Algorithm: ecdsa-with-SHA512'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'ASN1 OID: secp384r1'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'CRL Distribution Points'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'URI:http://crl.ansibleguy.net/ca.crl'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/ca.crt'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'CA:TRUE'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'Subject: CN = TestRootCA'}
+        ## sub-ca 1
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'Signature Algorithm: ecdsa-with-SHA256'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'ASN1 OID: secp384r1'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'CRL Distribution Points'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'URI:http://crl.ansibleguy.net/ca.crl'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/ca.crt'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'CA:TRUE'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'Subject: CN = TestSubCA'}
+        - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'Signature Algorithm: ecdsa-with-SHA256'}
+        - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'ASN1 OID: secp384r1'}
+        - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CRL Distribution Points'}
+        - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub1.crl'}
+        - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub1.crt'}
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'Subject: CN = AnsibleGuy Website'}  # todo: cn not working with using 'nopass=false'
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'DNS:www.ansibleguy.net, DNS:ansibleguy.net, URI:https://www.ansibleguy.net'}
+        ## sub-ca 2
+        - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub2.crl'}
+        - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub2.crt'}
+        - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'DNS:random.ansible.net'}
+        - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt", find: 'Subject: CN = ServerClientTest'}
+        - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt", find: 'TLS Web Server Authentication, TLS Web Client Authentication'}
+
+        # instance 2
+

@@ -6,7 +6,7 @@
     state: directory
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.group_read }}"
-    mode: 0755
+    mode: "{{ PKI_HC.mode.dir }}"
   loop: "{{ PKI_HC.easyrsa.privileges.public.dirs + [''] }}"
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on public files"
@@ -21,7 +21,9 @@
   loop: "{{ PKI_HC.easyrsa.privileges.public.files }}"
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on public directory content"
-  ansible.builtin.command: "chmod {{ PKI.mode_public }} {{ easyrsa_base }}/{{ item }}/*"
+  ansible.builtin.shell: "chmod {{ PKI.mode_public }} {{ easyrsa_base }}/{{ item }}/*"
+  args:
+    executable: '/bin/bash'
   loop: "{{ PKI_HC.easyrsa.privileges.public.dirs }}"
   register: pki_privs_public_mode
   changed_when: false
@@ -31,7 +33,7 @@
   tags: skip_ansible_lint  # chmod used in place of argument owner to file module => not possible in that case
 
 - name: "{{ privilege_task_prefix }} | Setting ownership on public directory content"
-  ansible.builtin.command: "chown {{ pki_cnf.owner }}:{{ pki_cnf.group_read }} {{ easyrsa_base }}/{{ item }}/*"
+  ansible.builtin.command: "chown -R {{ pki_cnf.owner }}:{{ pki_cnf.group_read }} {{ easyrsa_base }}/{{ item }}"
   loop: "{{ PKI_HC.easyrsa.privileges.public.dirs }}"
   register: pki_privs_public_owner
   changed_when: false
@@ -46,7 +48,7 @@
     state: directory
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
-    mode: 0750
+    mode: "{{ PKI_HC.mode.dir }}"
   loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on private files"
@@ -57,11 +59,13 @@
     modification_time: preserve
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
-    mode: 0640
+    mode: "{{ PKI_HC.mode.file }}"
   loop: "{{ PKI_HC.easyrsa.privileges.private.files }}"
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on private directory content"
-  ansible.builtin.command: "chmod 640 {{ easyrsa_base }}/{{ item }}/*"
+  ansible.builtin.shell: "chmod {{ PKI_HC.mode.file }} {{ easyrsa_base }}/{{ item }}/*"
+  args:
+    executable: '/bin/bash'
   loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
   register: pki_privs_private_mode
   changed_when: false
@@ -71,7 +75,7 @@
   tags: skip_ansible_lint  # chmod used in place of argument owner to file module => not possible in that case
 
 - name: "{{ privilege_task_prefix }} | Setting ownership on private directory content"
-  ansible.builtin.command: "chown {{ pki_cnf.owner }}:{{ pki_cnf.owner }} {{ easyrsa_base }}/{{ item }}/*"
+  ansible.builtin.command: "chown -R {{ pki_cnf.owner }}:{{ pki_cnf.owner }} {{ easyrsa_base }}/{{ item }}"
   loop: "{{ PKI_HC.easyrsa.privileges.private.dirs }}"
   register: pki_privs_private_owner
   changed_when: false
@@ -82,14 +86,14 @@
 
 - name: "{{ privilege_task_prefix }} | Setting privileges on password files"
   ansible.builtin.file:
-    path: "{{ easyrsa_base }}/{{ item }}"
+    path: "{{ item }}"
     state: touch
     access_time: preserve
     modification_time: preserve
     owner: 'root'
     group: 'root'
-    mode: 0400
+    mode: 0400  # if someone is already root - all hope is lost anyway
   when: PKI.save_passwords | bool
   loop:
-    - "{{ PKI_HC.file.pwd_ca }}"
-    - "{{ PKI_HC.file.pwd_cert }}"
+    - "{{ easyrsa_base }}/{{ PKI_HC.file.pwd_ca }}"
+    - "{{ easyrsa_base }}/{{ PKI_HC.file.pwd_cert }}"

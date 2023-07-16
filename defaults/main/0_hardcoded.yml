@@ -32,6 +32,14 @@ PKI_HC:
     crl: 'crl.pem'
     ca: 'ca.crt'
 
+  ext:
+    crl: 'crl'
+    crt: 'crt'
+
+  mode:
+    dir: '0750'
+    file: '0640'
+
   requirements: ['python3-pexpect', 'openssl']
 
   options:

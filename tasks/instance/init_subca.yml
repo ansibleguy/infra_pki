@@ -20,7 +20,7 @@
     state: directory
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.group_read }}"
-    mode: 0755
+    mode: "{{ PKI_HC.mode.dir }}"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Copying from template"
   ansible.builtin.copy:
@@ -29,14 +29,14 @@
     dest: "{{ pki_path_subca }}/"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
-    mode: 0640
-    directory_mode: 0750
+    mode: "{{ PKI_HC.mode.file }}"
+    directory_mode: "{{ PKI_HC.mode.dir }}"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Copying config"
   ansible.builtin.template:
     src: 'templates/var/lib/pki/instance/vars.j2'
     dest: "{{ pki_path_subca }}/vars"
-    mode: 0640
+    mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
   vars:
@@ -100,8 +100,14 @@
   ansible.builtin.copy:
     dest: "{{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
     content: "{{ pki_subca_pwd }}"
-    mode: 0400
+    mode: 0400  # if someone is already root - all hope is lost anyway
     owner: 'root'
     group: 'root'
   no_log: true
   when: PKI.save_passwords | bool
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Updating privileges"
+  ansible.builtin.include_tasks: update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"
+    privilege_task_prefix: "{{ task_prefix_subca }}"

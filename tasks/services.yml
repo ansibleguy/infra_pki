@@ -1,5 +1,46 @@
 ---
 
+# todo: services
 # crl-update
 
-# local backup
+- name: PKI | Service | Backup | Adding backup directory
+  ansible.builtin.file:
+    path: "{{ PKI.backup.path }}"
+    state: directory
+    owner: 'root'
+    group: 'root'
+    mode: 0700
+  when: PKI.backup.enable | bool
+
+- name: PKI | Service | Backup | Adding service & timer
+  ansible.builtin.template:
+    src: "templates/etc/systemd/system/backup-pki.{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ PKI.backup.service }}.{{ item }}"
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+  when: PKI.backup.enable | bool
+  loop:
+    - 'service'
+    - 'timer'
+
+- name: OpenVPN | Service | Backup | Enabling & Starting timer
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: "{{ PKI.backup.service }}.timer"
+    state: started
+    enabled: true
+  when: PKI.backup.enable | bool
+
+- name: OpenVPN | Service | Backup | Disabling & Stopping timer
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: "{{ PKI.backup.service }}.timer"
+    state: stopped
+    enabled: false
+  when: not PKI.backup.enable | bool
+  register: pki_backup_disable
+  failed_when:
+    - pki_backup_disable.failed
+    - "'does not exist' not in pki_backup_disable.msg"
+

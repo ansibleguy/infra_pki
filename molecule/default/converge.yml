@@ -8,15 +8,27 @@
       crl_distribution:
         domain: 'crl.ansibleguy.net'
 
+      backup:
+        enable: true
+
       instances:
         test1:
+          ca_cn: 'TestRootCA'
           pwd_ca: 'tesT12345'
+          vars:
+            req_org: 'test.org'
+            req_ou: 'test.ou'
+            algo: 'ec'
+            curve: 'secp384r1'
 
           sub_cas:
             sub1:
+              ca_cn: 'TestSubCA1'
               pwd_ca: 'tEst54321'
               pwd_cert: 'teSt32521'
               cert_no_pass: false
+              vars:
+                req_org: 'test1org'
 
               certs:
                 server:
@@ -28,7 +40,7 @@
                     san:
                       dns: ['www.ansibleguy.net', 'ansibleguy.net']
                       ip: '135.181.170.217'
-                      uri: 'https://www-ansibleguy.net'
+                      uri: 'https://www.ansibleguy.net'
 
                   test2:
 
@@ -44,7 +56,51 @@
                     san:
                       email: 'guy@ansibleguy.net'
 
-                serverClient: {}  # special cases where application has to use same cert for server & client connections
+            sub2:
+              pwd_ca: 'tEst543212'
+              pwd_cert: 'teSt325212'
+              cert_no_pass: true
+              vars:
+                req_org: 'test2org'
+                req_ou: 'test2ou'
+                req_email: 'test2email@test.intern'
+                req_country: 'test2country'
+                req_province: 'test2province'
+              export:
+                unencrypted: true
+
+              certs:
+                server:
+                  random1:
+                    cn: 'Random server'
+                    export:
+                      unencrypted: false
+                      chain: true
+                      # pkcs1: true  # failing..
+                      pkcs7: true
+                      pkcs8: true
+                      pkcs12: true
+
+                    san:
+                      dns: ['random.ansible.net']
+
+                serverClient:
+                  random2:
+                    cn: 'ServerClientTest'
+                    export:
+                      chain: false
+                      pkcs12: false
+
+        test2:
+          pwd_ca: 'tesT12345'
+          vars:
+            req_org: 'test.org'
+            req_ou: 'test.ou'
+            algo: 'rsa'
+            key_size: 8192
+
+          sub_cas:
+            sub1:
 
   roles:
     - ansibleguy.infra_pki

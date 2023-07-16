@@ -24,7 +24,7 @@
     state: directory
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.group_read }}"
-    mode: 0755
+    mode: "{{ PKI_HC.mode.dir }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Copying from template"
   ansible.builtin.copy:
@@ -33,19 +33,32 @@
     dest: "{{ pki_path_ca }}/"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
-    mode: 0640
-    directory_mode: 0750
+    mode: "{{ PKI_HC.mode.file }}"
+    directory_mode: "{{ PKI_HC.mode.dir }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Copying config"
   ansible.builtin.template:
     src: 'templates/var/lib/pki/instance/vars.j2'
     dest: "{{ pki_path_ca }}/vars"
-    mode: 0640
+    mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
     group: "{{ pki_cnf.owner }}"
   vars:
     easyrsa_vars: "{{ pki_vars }}"
     easyrsa_base: "{{ pki_path_ca }}"
+
+- name: "{{ task_prefix_pki }} | Init-CA | Adding certificate extensions"
+  ansible.builtin.template:
+    src: 'templates/var/lib/pki/instance/x509-types/COMMON.j2'
+    dest: "{{ pki_path_ca }}/x509-types/COMMON"
+    mode: "{{ PKI_HC.mode.file }}"
+    owner: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.owner }}"
+  vars:
+    pki_crl_distribution: "{{ PKI.crl_distribution | combine(pki_cnf.crl_distribution) }}"
+    pki_crl_prefix: 'ca'
+    pki_extensions: "{{ PKI.extensions |
+    combine(pki_cnf.extensions, recursive=true) }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Initializing"
   ansible.builtin.expect:
@@ -70,8 +83,14 @@
   ansible.builtin.copy:
     dest: "{{ pki_path_ca }}/{{ PKI_HC.file.pwd_ca }}"
     content: "{{ pki_ca_pwd }}"
-    mode: 0400
+    mode: 0400  # if someone is already root - all hope is lost anyway
     owner: 'root'
     group: 'root'
   no_log: true
   when: PKI.save_passwords | bool
+
+- name: "{{ task_prefix_pki }} | Init-CA | Updating privileges"
+  ansible.builtin.include_tasks: update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_ca }}"
+    privilege_task_prefix: "{{ task_prefix_pki }}"

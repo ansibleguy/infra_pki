@@ -1,19 +1,32 @@
 ---
 
-- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating request"
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating request (nopass)"
   ansible.builtin.expect:
     command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
-    gen-req {{ pki_cert_file }}
-    {% if pki_cert_no_pass | bool %}nopass{% endif %}"
+    gen-req {{ pki_cert_file }} nopass"
     responses:
-      "Enter PEM pass phrase": "{{ pki_cert_pwd }}"
-      "Verifying": "{{ pki_cert_pwd }}"
       "Common Name": "{{ pki_cert_cnf.cn }}"
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
   args:
     creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.key"
   no_log: true
+  when: pki_cert_no_pass | bool
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating request"
+  ansible.builtin.expect:
+    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
+    gen-req {{ pki_cert_file }}"
+    responses:
+      "Enter PEM pass phrase": "{{ pki_cert_pwd }}"
+      "Verifying - Enter PEM pass phrase": "{{ pki_cert_pwd }}"
+      "Common Name": "{{ pki_cert_cnf.cn }}"
+  environment:
+    EASYRSA_PKI: "{{ pki_path_subca }}"
+  args:
+    creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.key"
+  no_log: true
+  when: not pki_cert_no_pass | bool
 
 - name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | Creating certificate"
   ansible.builtin.expect:
@@ -54,6 +67,7 @@
     -out {{ pki_path_subca }}/private/{{ pki_cert_file }}.unencrypted.key"
     responses:
       "Enter pass phrase": "{{ pki_cert_pwd }}"
+      "Enter PEM pass phrase": "{{ pki_cert_pwd }}"
   args:
     creates: "{{ pki_path_subca }}/private/{{ pki_cert_file }}.unencrypted.key"
   no_log: true

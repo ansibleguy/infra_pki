@@ -1,0 +1,24 @@
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+# NOTE:
+#   restore: tar xJf {{ PKI.backup.path }}/{DATETIME}.tar.xz
+
+[Unit]
+Description=Service to create a local backup of the PKI directories
+Documentation=https://github.com/ansibleguy/infra_pki
+ConditionPathExists={{ PKI.backup.path }}
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/bin/bash -c 'tar cJf \"{{ PKI.backup.path }}/$$(date +\'%%Y-%%m-%%d_%%H-%%M-%%S\').tar.xz\"{% for path in PKI.instances | unique_bases(defaults_instance.path_base) %} {{ path }}{% endfor %}'
+{% if ansible_distribution_version == '10' %}
+StandardOutput=syslog
+StandardError=syslog
+{% else %}
+StandardOutput=journal
+StandardError=journal
+{% endif %}
+SyslogIdentifier=pki_backup
