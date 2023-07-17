@@ -1,0 +1,72 @@
+---
+
+# ansible-playbook -K -D -i inventory/hosts.yml playbook.yml
+
+- name: PKI Single Certificate
+  hosts: all   # should be limited
+  become: true
+  gather_facts: false
+
+  vars_prompt:
+    - name: pki_name
+      prompt: 'Provide the name of the Root-CA to use!'
+      private: false
+
+    - name: pki_name_subca
+      prompt: 'Provide the name of the Sub-CA to use!'
+      private: false
+
+    - name: pki_subca_pwd
+      prompt: "Provide the Sub-CA password if not using 'save_password' mode!"
+      private: true
+
+    - name: pki_cert_action
+      prompt: 'Provide an action to perform! (create,renew,revoke)'
+      private: false
+
+    - name: pki_cert_name
+      prompt: 'Provide a certificate name!'
+      private: false
+
+    - name: pki_cert_type
+      prompt: 'Provide a certificate type! (client,server,serverClient,email,code-signing)'
+      private: false
+
+    - name: cert_raw_cn
+      prompt: "Provide a certificate common-name! [IF NOT REVOKE]"
+      private: false
+
+    - name: cert_raw_san
+      prompt: "Provide comma-separated subject-alternative-names!
+      (dns,ip,uri,email,other,dir; per example: 'ip:192.168.0.1,dns:ag.net')
+      [IF NOT REVOKE]"
+      private: false
+
+    - name: cert_raw_formats
+      prompt: "Provide comma-separated formats to export additionally!
+       (unencrypted,chain,p1,p7,p8,p12)
+       [IF NOT REVOKE]"
+      private: false
+
+    - name: cert_raw_pwd
+      prompt: "Provide a password for the certificate! (default: from config) [IF NOT REVOKE]"
+      private: true
+
+  vars:
+    pki_cert_cnf:
+      cn: "{{ cert_raw_cn }}"
+      pwd: "{{ cert_raw_pwd }}"
+      export:
+        unencrypted: "{{ true if 'unencrypted' in cert_raw_formats else false }}"
+        chain: "{{ true if 'chain' in cert_raw_formats else false }}"
+        pkcs1: "{{ true if 'p1' in cert_raw_formats else false }}"
+        pkcs7: "{{ true if 'p7' in cert_raw_formats else false }}"
+        pkcs8: "{{ true if 'p8' in cert_raw_formats else false }}"
+        pkcs12: "{{ true if 'p12' in cert_raw_formats else false }}"
+      san: "{{ cert_raw_san | san_cs_dict }}"
+
+  tasks:
+    - name: PKI | Managing single certificate
+      ansible.builtin.import_role:
+        name: ansibleguy.infra_pki
+        tasks_from: single_cert.yml

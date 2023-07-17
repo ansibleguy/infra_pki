@@ -101,4 +101,4 @@ defaults_cert:
     pkcs7:
     pkcs8:
     pkcs12:
-  cn: "Auto-Generated Certificate - {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+  cn: "Certificate-{{ ansible_date_time.date }}-{{ ansible_date_time.time }}"

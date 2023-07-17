@@ -12,9 +12,9 @@
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
   args:
-    creates: "{% if pki_export_p != '7' %}\
-    {{ pki_path_subca }}/private/{{ pki_cert_file }}.p{{ pki_export_p }}\
+    creates: "{% if pki_export_p == '7' %}\
+    {{ pki_path_subca }}/issued/{{ pki_cert_file }}.p7b\
     {% else %}\
-    {{ pki_path_subca }}/issued/{{ pki_cert_file }}.p{{ pki_export_p }}b
+    {{ pki_path_subca }}/private/{{ pki_cert_file }}.p{{ pki_export_p }}\
     {% endif %}"
   no_log: true

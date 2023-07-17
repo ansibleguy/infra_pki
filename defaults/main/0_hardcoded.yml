@@ -47,7 +47,7 @@ PKI_HC:
     algo: ['rsa', 'ec', 'ed']
     digest: ['md5', 'sha1', 'sha256', 'sha224', 'sha384', 'sha512']
 
-  san_mapping: {'dns': 'DNS', 'uri': 'URI', 'email': 'email', 'other': 'otherName', 'dir': 'dirName'}
+  san_mapping: {'dns': 'DNS', 'ip': 'IP', 'uri': 'URI', 'email': 'email', 'other': 'otherName', 'dir': 'dirName'}
   cert:
     states:
       create: ['renewed', 'present', 'created']

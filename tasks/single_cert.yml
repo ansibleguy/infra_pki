@@ -1,3 +1,92 @@
 ---
 
-# todo: interface to add/renew/revoke a single certificate inside a subca
+# NOTE: a dedicated 'role-interface' to create/renew/revoke a single certificate inside a SubCA
+
+- name: PKI | Single Cert | Setting vars (1/3)
+  ansible.builtin.set_fact:
+    task_prefix_cert: "PKI | Single Cert"
+    pki_cnf: "{{ defaults_instance | combine(PKI.instances[pki_name], recursive=true) }}"
+    pki_cnf_subca: "{{ defaults_subca | combine(PKI.instances[pki_name]['sub_cas'][pki_name_subca], recursive=true) }}"
+
+- name: PKI | Single Cert | Setting vars (2/3)
+  ansible.builtin.set_fact:
+    pki_path_subca: "{{ pki_cnf.path_base }}/{{ pki_name }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
+    pki_cert_name: "{{ pki_cert_name | safe_key }}"
+    pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cert_pwd) | default('') }}"
+    pki_cert_file: "{{ pki_cert_type }}_{{ pki_cert_name }}"
+    pki_cert_no_pass: "{{ pki_cert_cnf.no_pass | default(pki_cnf_subca.cert_no_pass, true) }}"
+
+- name: PKI | Single Cert | Setting vars (3/3)
+  ansible.builtin.set_fact:
+    pki_vars_param: "--vars={{ pki_path_subca }}/vars"
+    provided_pwd_cert: "{{ pki_cert_pwd | default(none, true) is not none }}"
+    provided_pwd_subca: "{{ pki_subca_pwd | default(none, true) is not none }}"
+
+- name: "{{ task_prefix_cert }} | Validating input"
+  ansible.builtin.assert:
+    that:
+      - pki_name | default(none, true) is not none
+      - pki_name_subca | default(none, true) is not none
+      - pki_cert_name | default(none, true) is not none
+      - pki_cert_action in ['create', 'renew', 'revoke']
+      - pki_cert_type in PKI_HC.cert.types
+      - PKI.save_passwords | bool or (provided_pwd_cert | bool and pki_cert_pwd | meets_password_complexity(PKI_HC))
+      - PKI.save_passwords | bool or provided_pwd_subca | bool
+      - pki_cert_cnf | is_dict
+
+- name: "{{ task_prefix_cert }} | Checking if sub-ca exists"
+  ansible.builtin.stat:
+    path: "{{ pki_path_subca }}/ca.crt"
+  register: pki_sc_subca_file
+  failed_when: not pki_sc_subca_file.stat.exists
+
+- name: "{{ task_prefix_cert }} | Loading passwords"
+  block:
+    - name: "{{ task_prefix_cert }} | Retrieving CA-password from file"
+      ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
+      register: pki_subca_pwd_file
+      changed_when: false
+      no_log: true
+      when: not provided_pwd_subca | bool
+
+    - name: "{{ task_prefix_cert }} | Setting CA-password to saved one"
+      ansible.builtin.set_fact:
+        pki_subca_pwd: "{{ pki_subca_pwd_file.stdout }}"
+      when: not provided_pwd_subca | bool
+
+    - name: "{{ task_prefix_cert }} | Retrieving Cert-password from file"
+      ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_cert }}"
+      register: pki_all_cert_pwd_file
+      changed_when: false
+      no_log: true
+      when: not provided_pwd_cert | bool
+
+    - name: "{{ task_prefix_cert }} | Setting Cert-password to saved one"
+      ansible.builtin.set_fact:
+        pki_cert_pwd: "{{ pki_all_cert_pwd_file.stdout }}"
+      failed_when: pki_all_cert_pwd_file.stdout | default(none, true) is none
+      when: not provided_pwd_cert | bool
+  when:
+    - not provided_pwd_cert | bool or not provided_pwd_subca | bool
+    - PKI.save_passwords | bool
+
+- name: "{{ task_prefix_cert }} | Creating certificate"
+  ansible.builtin.import_tasks: instance/certs/revoke.yml
+  when: pki_cert_action in ['revoke', 'renew']
+
+- name: "{{ task_prefix_cert }} | Creating certificate"
+  ansible.builtin.import_tasks: instance/certs/create.yml
+  when: pki_cert_action in ['create', 'renew']
+
+- name: "{{ task_prefix_cert }} | Updating CRL"
+  ansible.builtin.include_tasks: update_crl.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"
+    crl_task_prefix: "{{ task_prefix_subca }}"
+  when: pki_cert_action in ['revoke', 'renew']
+
+- name: "{{ task_prefix_cert }} | Updating privileges"
+  ansible.builtin.include_tasks: update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"
+    privilege_task_prefix: "{{ task_prefix_cert }}"

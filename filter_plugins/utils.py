@@ -14,6 +14,7 @@ class FilterModule(object):
             "ensure_list": self.ensure_list,
             "is_dict": self.is_dict,
             "unique_bases": self.unique_bases,
+            "san_cs_dict": self.san_cs_dict,
         }
 
     @staticmethod
@@ -83,3 +84,16 @@ class FilterModule(object):
                 bases.append(default)
 
         return list(set(bases))
+
+    @staticmethod
+    def san_cs_dict(data: str) -> dict:
+        san = {}
+
+        for entry in data.split(','):
+            key, value = entry.split(':')
+            if key not  in san:
+                san[key] = []
+
+            san[key].append(value)
+
+        return san

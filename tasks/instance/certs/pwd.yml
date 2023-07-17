@@ -6,49 +6,43 @@
   register: pki_all_cert_pwd_file
   when: PKI.save_passwords | bool
 
-- name: "{{ task_prefix_subca }} | PWD-Cert | Retrieving CA-password from file"
+- name: "{{ task_prefix_subca }} | PWD-Cert | Retrieving Cert-password from file"
   ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_cert }}"
-  register: pki_all_cert_pwd_file_raw
+  register: pki_all_cert_pwd_file
   changed_when: false
+  no_log: true
   when:
     - PKI.save_passwords | bool
     - pki_all_cert_pwd_file.stat.exists
 
 - name: "{{ task_prefix_subca }} | PWD-Cert | Setting Cert-password to saved one"
   ansible.builtin.set_fact:
-    pki_all_cert_pwd_file: "{{ pki_all_cert_pwd_file_raw.stdout }}"
+    pki_cert_pwd: "{{ pki_all_cert_pwd_file.stdout }}"
+  failed_when: pki_all_cert_pwd_file.stdout | default(none, true) is none  # update_privileges is creating an empty file
   when:
     - PKI.save_passwords | bool
     - pki_all_cert_pwd_file.stat.exists
-    - pki_all_cert_pwd_file_raw.stdout | default(none, true) is not none  # update_privileges is creating an empty file
 
 - name: "{{ task_prefix_subca }} | PWD-Cert | Checking if Cert-password was provided"
   ansible.builtin.set_fact:
-    pki_all_cert_pwd_file: "{{ pki_cnf_subca.pwd_cert }}"
+    pki_cert_pwd: "{{ pki_cnf_subca.pwd_cert }}"
   when: pki_cnf_subca.pwd_cert | default(none, true) != none
 
 - name: "{{ task_prefix_subca }} | PWD-Cert | Prompting for Cert-password"
   ansible.builtin.pause:
     prompt: "No Certificate password was provided! Please input one! MAKE SURE TO SAVE THIS PASSWORD!!"
     echo: false
-  register: pki_all_cert_pwd_file_raw
-  when: pki_all_cert_pwd_file is undefined
+  register: pki_all_cert_pwd_file
+  when: pki_cert_pwd is undefined
   delegate_to: localhost
-
-- name: "{{ task_prefix_subca }} | PWD-Cert | Debugging"
-  ansible.builtin.debug:
-    msg: "{{ hostvars['localhost'] }}"
-  when:
-    - pki_all_cert_pwd_file is undefined
-    - "'pki_all_cert_pwd_file_raw' not in hostvars['localhost']"
 
 - name: "{{ task_prefix_subca }} | PWD-Cert | Setting Cert-password to user-input"
   ansible.builtin.set_fact:
-    pki_all_cert_pwd_file: "{{ hostvars['localhost'].pki_all_cert_pwd_file_raw.user_input }}"
-  when: pki_all_cert_pwd_file is undefined
+    pki_cert_pwd: "{{ hostvars['localhost'].pki_all_cert_pwd_file.user_input }}"
+  when: pki_cert_pwd is undefined
 
 - name: "{{ task_prefix_subca }} | PWD-Cert | Checking that password meets the requirements"
   ansible.builtin.assert:
     that:
-      - pki_all_cert_pwd_file | meets_password_complexity(PKI_HC)
+      - pki_cert_pwd | meets_password_complexity(PKI_HC)
   tags: always

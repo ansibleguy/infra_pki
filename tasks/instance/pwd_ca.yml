@@ -8,15 +8,16 @@
 
 - name: "{{ task_prefix_pki }} | PWD-CA | Retrieving CA-password from file"
   ansible.builtin.command: "cat {{ pki_path_ca }}/{{ PKI_HC.file.pwd_ca }}"
-  register: pki_ca_pwd_file_raw
+  register: pki_ca_pwd_file
   changed_when: false
+  no_log: true
   when:
     - PKI.save_passwords | bool
     - pki_ca_pwd_file.stat.exists
 
 - name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password to saved one"
   ansible.builtin.set_fact:
-    pki_ca_pwd: "{{ pki_ca_pwd_file_raw.stdout }}"
+    pki_ca_pwd: "{{ pki_ca_pwd_file.stdout }}"
   when:
     - PKI.save_passwords | bool
     - pki_ca_pwd_file.stat.exists

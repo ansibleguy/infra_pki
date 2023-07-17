@@ -104,3 +104,53 @@
 
   roles:
     - ansibleguy.infra_pki
+
+- name: Converge Single Certificate
+  hosts: test-ag-infra_pki-1
+  become: true
+  gather_facts: false
+  vars:
+    pki:
+      save_passwords: true
+      crl_distribution:
+        domain: 'crl.ansibleguy.net'
+
+      instances:
+        test1:
+          ca_cn: 'TestRootCA'
+          pwd_ca: 'tesT12345'
+          vars:
+            req_org: 'test.org'
+            req_ou: 'test.ou'
+            algo: 'ec'
+            curve: 'secp384r1'
+
+          sub_cas:
+            sub1:
+              ca_cn: 'TestSubCA1'
+              pwd_ca: 'tEst54321'
+              pwd_cert: 'teSt32521'
+              cert_no_pass: false
+              vars:
+                req_org: 'test1org'
+
+    pki_name: 'test1'
+    pki_name_subca: 'sub1'
+    pki_cert_action: 'create'
+    pki_cert_name: 'single'
+    pki_cert_type: 'server'
+    pki_cert_cnf:
+      cn: 'Single Certificate'
+      export:
+        unencrypted: true
+        chain: true
+        pkcs12: true
+      san:
+        ip: ['192.168.0.1']
+        dns: ['single.test']
+
+  tasks:
+    - name: PKI | Managing single certificate
+      ansible.builtin.import_role:
+        name: ansibleguy.infra_pki
+        tasks_from: single_cert.yml
