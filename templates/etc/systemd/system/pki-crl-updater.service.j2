@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+[Unit]
+Description=Service to update the PKI's Certificate-Revocation-Lists so they don't expire
+Documentation=https://github.com/ansibleguy/infra_pki
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/bin/bash {{ PKI_HC.path.script }}/pki_crl_update.sh
+{% if ansible_distribution_version == '10' %}
+StandardOutput=syslog
+StandardError=syslog
+{% else %}
+StandardOutput=journal
+StandardError=journal
+{% endif %}
+SyslogIdentifier=pki_crl_update

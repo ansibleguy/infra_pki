@@ -3,33 +3,42 @@
 # {{ ansible_managed }}
 # ansibleguy.infra_pki
 
+set -euo pipefail
+
 # script to periodically re-generate the CRL's as they expire after some time as configured with the 'crl_days' variable
 
-EASYRSA="{{ PKI_SCRIPT }}"
-OWNER="{{ pki_cnf.owner }}"
-GROUP="{{ pki_cnf.group_read }}"
-FILE_PWD="{{ PKI_HC.file.pwd_ca }}"
-FILE_CRL="{{ PKI_HC.file.crl }}"
+PKI_SCRIPT="{{ PKI_SCRIPT }}"
+PWD_FILE_CA="{{ PKI_HC.file.pwd_ca }}"
+MODE_PUBLIC="{{ PKI.mode_public }}"
+
 
 function gen_crl {
-  path_pki="$1"
-  ca_key="$path_pki/private/ca.key"
-  ca_pwd_file="$path_pki/$FILE_PWD"
-  if [ -f "$pki_ca_key" ]
+  pki_path="$1"
+  pki_owner="$2"
+  pki_group_public="$3"
+
+  pki_crl_file="${pki_path}/crl.pem"
+  pwd_file_ca="${pki_path}/${PWD_FILE_CA}"
+  if ! [ -f "$pwd_file_ca" ]
   then
-    EASYRSA_PKI="$path_pki" $EASYRSA --passin=file:"$ca_pwd_file" gen-crl
-    chown "$OWNER":"$GROUP" "$path_pki/$FILE_CRL"
-    cmod 644 "$path_pki/$FILE_CRL"
-  else
-    echo "CA-key '$pki_ca_key' was not found! Unable to re-generate CRL!"
+    echo "WARNING: Skipping CRL '${pki_crl_file}' because of missing password-file: '${pwd_file_ca}'"
+  elif [ -d "$pki_path" ]
+  then
+    EASYRSA_PKI="$pki_path" $PKI_SCRIPT --passin=file:"$pwd_file_ca" --vars="${pki_path}/vars" gen-crl
+    chown "$pki_owner":"$pki_group_public" "$pki_crl_file"
+    chmod "$MODE_PUBLIC" "$pki_crl_file"
   fi
 }
 
+{% for pki_name, pki_cnf in PKI.instances.items() %}
+{%   set pki_cnf = defaults_instance | combine(pki_cnf, recursive=true) %}
+{%   set pki_path_base = pki_cnf.path_base + '/' + pki_name %}
 # root-ca
-gen_crl "{{ PKI_HC.dir.root_ca }}"
+gen_crl '{{ pki_path_base }}/{{ PKI_HC.dir.root_ca }}' '{{ pki_cnf.owner }}' '{{ pki_cnf.group_read }}'
 
 # sub-ca's
-{% for subca_name in pki_cnf.sub_cas.keys() %}
-#   {{ subca_name }}
-gen_crl "{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ subca_name }}"
+{%   for subca_name in pki_cnf.sub_cas.keys() %}
+gen_crl '{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ subca_name }}' '{{ pki_cnf.owner }}' '{{ pki_cnf.group_read }}'
+{%   endfor %}
+
 {% endfor %}

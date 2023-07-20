@@ -26,13 +26,18 @@ defaults_pki:
     service: 'backup-pki'
     time: 'Sun 00:00'
 
+  crl_updater:
+    enable: true
+    service: 'pki-crl-updater'
+    time: 'Sun 01:00'
+
   vars: {}
   instances: {}
   extensions: {}
 
 defaults_instance:  # > pki_cnf
   ca_cn: 'Root CA'
-  path_base: '/var/lib/pki'
+  path_base: '/var/local/lib/pki'
   owner: 'pki'
   group: 'pki'
   group_read: 'pki_read'  # for monitoring and so on
@@ -82,23 +87,21 @@ defaults_subca:  # > pki_cnf_subca
   extensions: {}
   certs: {}
   crl_distribution: {}
-  cert_no_pass: true
   export:
     unencrypted: false
-    chain: true  # todo: switch to false not working (?)
+    chain: true
     pkcs1: false
-    pkcs7: false  # p7b
+    pkcs7: false  # p7b = public cert-store
     pkcs8: false
     pkcs12: true
 
 defaults_cert:
   state: 'present'
-  no_pass:
   export:
-    unencrypted:
-    chain:
-    pkcs1:
-    pkcs7:
-    pkcs8:
-    pkcs12:
+    # unencrypted:
+    # chain:
+    # pkcs1:
+    # pkcs7:
+    # pkcs8:
+    # pkcs12:
   cn: "Certificate-{{ ansible_date_time.date }}-{{ ansible_date_time.time }}"

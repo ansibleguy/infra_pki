@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+[Unit]
+Description=Service to update the PKI's Certificate-Revocation-Lists so they don't expire
+
+[Timer]
+OnCalendar={{ PKI.crl_updater.time }}
+Persistent=false
+WakeSystem=false
+
+[Install]
+WantedBy=multi-user.target
