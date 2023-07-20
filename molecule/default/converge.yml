@@ -46,7 +46,7 @@
                       uri: 'https://www.ansibleguy.net'
 
                   test2:
-                    # state: 'renewed'  # working on first run; but failing idempotence
+                  # state: 'renewed'  # working on first run; but failing idempotence
 
                 client:
                   wkst1:

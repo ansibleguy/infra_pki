@@ -2,6 +2,7 @@
 
 - name: "{{ crl_task_prefix }} | Updating CRL"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} gen-crl"
+  changed_when: false
   environment:
     EASYRSA_PKI: "{{ easyrsa_base }}"
     EASYRSA_PASSIN: "pass:{{ easyrsa_ca_pwd }}"

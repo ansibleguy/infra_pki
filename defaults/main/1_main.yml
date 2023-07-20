@@ -98,10 +98,10 @@ defaults_subca:  # > pki_cnf_subca
 defaults_cert:
   state: 'present'
   export:
-    # unencrypted:
-    # chain:
-    # pkcs1:
-    # pkcs7:
-    # pkcs8:
-    # pkcs12:
+  # unencrypted:
+  # chain:
+  # pkcs1:
+  # pkcs7:
+  # pkcs8:
+  # pkcs12:
   cn: "Certificate-{{ ansible_date_time.date }}-{{ ansible_date_time.time }}"

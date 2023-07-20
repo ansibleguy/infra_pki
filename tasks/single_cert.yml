@@ -37,6 +37,7 @@
   failed_when: not pki_sc_subca_file.stat.exists
 
 - name: "{{ task_prefix_cert }} | Loading password"
+  when: PKI.save_passwords | bool
   block:
     - name: "{{ task_prefix_cert }} | Retrieving CA-password from file"
       ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
@@ -47,7 +48,6 @@
     - name: "{{ task_prefix_cert }} | Setting CA-password to saved one"
       ansible.builtin.set_fact:
         pki_subca_pwd: "{{ pki_subca_pwd_file_txt.stdout }}"
-  when: PKI.save_passwords | bool
 
 - name: "{{ task_prefix_cert }} | No or empty Sub-CA password"
   ansible.builtin.fail:

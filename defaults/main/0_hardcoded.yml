@@ -40,7 +40,7 @@ PKI_HC:
     dir: '0750'
     file: '0640'
 
-  requirements: ['python3-pexpect', 'openssl']
+  requirements: ['openssl']
 
   options:
     key_size: ['1024', '2048', '4096', '8192']

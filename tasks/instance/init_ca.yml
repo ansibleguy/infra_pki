@@ -62,11 +62,13 @@
 
 - name: "{{ task_prefix_pki }} | Init-CA | Initializing"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
+  changed_when: false
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Generating CA"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} --no-text build-ca"
+  changed_when: false
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
     EASYRSA_REQ_CN: "{{ pki_cnf.ca_cn }}"

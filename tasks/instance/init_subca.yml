@@ -45,11 +45,13 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Initializing"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
+  changed_when: false
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Generating SubCA"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} build-ca subca"
+  changed_when: false
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
     EASYRSA_REQ_CN: "{{ pki_cnf_subca.ca_cn }}"

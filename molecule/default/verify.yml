@@ -120,7 +120,8 @@
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub1.crl'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub1.crt'}
         - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'Subject: CN = AnsibleGuy Website'}
-        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'DNS:www.ansibleguy.net, DNS:ansibleguy.net, IP Address:135.181.170.217, URI:https://www.ansibleguy.net'}
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt",
+           find: 'DNS:www.ansibleguy.net, DNS:ansibleguy.net, IP Address:135.181.170.217, URI:https://www.ansibleguy.net'}
         ## sub-ca 2
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub2.crl'}
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub2.crt'}
@@ -144,7 +145,7 @@
       with_items:
         - {path: "{{ t1sub1 }}", expect: [
           'total',
-          '-rw-r-----', 
+          '-rw-r-----',
           '-rw-r-----',
           'drwxr-x---',
           '-rw-r-----',
@@ -200,7 +201,7 @@
       failed_when: test_chown.stdout_lines != item.expect
       with_items:
         - {path: "{{ t1sub1 }}", fields: '3-5', expect: [
-          '',
+        '',
           "{{ owner }}  {{ group_read }}",
           "{{ owner }}  {{ group_read }}",
           "{{ owner }}  {{ group_read }}",
@@ -222,7 +223,7 @@
           "{{ owner }}  {{ owner }}",
         ]}
         - {path: "{{ t1sub1 }}/private", fields: '3-4', expect: [
-          '',
+        '',
           "{{ owner }} {{ owner }}",
           "{{ owner }} {{ owner }}",
           "{{ owner }} {{ owner }}",
@@ -236,7 +237,7 @@
           "{{ owner }} {{ owner }}",
         ]}
         - {path: "{{ t1sub1 }}/issued", fields: '3-4', expect: [
-          '',
+        '',
           "{{ owner }} {{ group_read }}",
           "{{ owner }} {{ group_read }}",
           "{{ owner }} {{ group_read }}",

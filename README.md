@@ -34,7 +34,6 @@ ansible-galaxy install -r requirements.yml
 ## Functionality
 
 * **Package installation**
-  * Python3 '[pexpect](https://pexpect.readthedocs.io/en/stable/)' module as required by the [ansible.builtin.expect](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/expect_module.html) module.
   * OpenSSL
 
 
