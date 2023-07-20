@@ -75,9 +75,6 @@ ansible-galaxy install -r requirements.yml
     * Purging of orphaned (_existing but not configured_) certificates
     * Encryption of certificate private-keys (_non CA/Sub-CA_)
 
-### Example
-
-Check out the more detailed example: [Example](https://github.com/ansibleguy/infra_pki/blob/latest/Example.md)
 
 ----
 
@@ -86,6 +83,10 @@ Check out the more detailed example: [Example](https://github.com/ansibleguy/inf
 ### Config
 
 Define the config as needed:
+
+### Example
+
+You can find a more detailed example here: [Example](https://github.com/ansibleguy/infra_pki/blob/latest/Example.md)
 
 #### Minimal setup
 
