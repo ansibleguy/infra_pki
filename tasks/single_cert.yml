@@ -30,9 +30,6 @@
       - PKI.save_passwords | bool or provided_pwd_subca | bool
       - pki_cert_cnf | is_dict
 
-- debug:
-    msg: "{{ pki_path_subca }}/ca.crt"
-
 - name: "{{ task_prefix_cert }} | Checking if sub-ca exists"
   ansible.builtin.stat:
     path: "{{ pki_path_subca }}/ca.crt"
