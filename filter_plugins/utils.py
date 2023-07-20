@@ -67,7 +67,7 @@ class FilterModule(object):
         if len(san) == 0:
             return ''
 
-        return f"--subject-alt-name=\"{','.join(san)}\""
+        return f"\"{','.join(san)}\""
 
     @staticmethod
     def is_dict(data) -> bool:

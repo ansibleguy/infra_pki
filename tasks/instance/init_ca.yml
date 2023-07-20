@@ -1,7 +1,7 @@
 ---
 
 - name: "{{ task_prefix_pki }} | Init-CA | Getting CA password"
-  ansible.builtin.include_tasks: pwd_ca.yml
+  ansible.builtin.include_tasks: instance/pwd_ca.yml
 
 - name: "{{ task_prefix_pki }} | Init-CA | Adding CA-Owner"
   ansible.builtin.user:
@@ -38,7 +38,7 @@
 
 - name: "{{ task_prefix_pki }} | Init-CA | Copying config"
   ansible.builtin.template:
-    src: 'templates/var/lib/pki/instance/vars.j2'
+    src: 'templates/var/local/lib/pki/instance/vars.j2'
     dest: "{{ pki_path_ca }}/vars"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
@@ -49,7 +49,7 @@
 
 - name: "{{ task_prefix_pki }} | Init-CA | Adding certificate extensions"
   ansible.builtin.template:
-    src: 'templates/var/lib/pki/instance/x509-types/COMMON.j2'
+    src: 'templates/var/local/lib/pki/instance/x509-types/COMMON.j2'
     dest: "{{ pki_path_ca }}/x509-types/COMMON"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
@@ -61,22 +61,17 @@
     combine(pki_cnf.extensions, recursive=true) }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Initializing"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
-    responses:
-      "Confirm removal": 'yes'
+  ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Generating CA"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} build-ca"
-    responses:
-      "Enter New CA Key Passphrase": "{{ pki_ca_pwd }}"
-      "Confirm New CA Key Passphrase": "{{ pki_ca_pwd }}"
-      "Common Name": "{{ pki_cnf.ca_cn }}"
+  ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} --no-text build-ca"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
+    EASYRSA_REQ_CN: "{{ pki_cnf.ca_cn }}"
+    EASYRSA_PASSIN: "pass:{{ pki_ca_pwd }}"
+    EASYRSA_PASSOUT: "pass:{{ pki_ca_pwd }}"
   no_log: true
 
 - name: "{{ task_prefix_pki }} | Init-CA | Saving password"
@@ -89,8 +84,19 @@
   no_log: true
   when: PKI.save_passwords | bool
 
+- name: "{{ task_prefix_pki }} | Init-CA | Generating CRL"
+  ansible.builtin.include_tasks: instance/update_crl.yml
+  vars:
+    easyrsa_base: "{{ pki_path_ca }}"
+    easyrsa_ca_pwd: "{{ pki_ca_pwd }}"
+    crl_task_prefix: "{{ task_prefix_pki }}"
+
 - name: "{{ task_prefix_pki }} | Init-CA | Updating privileges"
-  ansible.builtin.include_tasks: update_privileges.yml
+  ansible.builtin.include_tasks: instance/update_privileges.yml
   vars:
     easyrsa_base: "{{ pki_path_ca }}"
     privilege_task_prefix: "{{ task_prefix_pki }}"
+  tags: [always]
+  args:
+    apply:
+      tags: [always]

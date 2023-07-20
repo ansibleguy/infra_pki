@@ -20,6 +20,18 @@
 - name: PKI | EasyRSA
   ansible.builtin.import_tasks: easyrsa.yml
 
+- name: PKI | Copying scripts
+  ansible.builtin.template:
+    src: "templates/usr/local/sbin/{{ item }}.j2"
+    dest: "{{ PKI_HC.path.script }}/{{ item }}"
+    mode: 0750
+    owner: 'root'
+    group: 'root'
+  loop:
+    - 'pki_cert.sh'
+    - 'pki_privileges.sh'
+    - 'pki_crl_update.sh'
+
 - name: PKI | Processing instances
   ansible.builtin.include_tasks: instance/main.yml
   vars:
@@ -31,15 +43,19 @@
     combine(pki_cnf.vars, recursive=true) }}"
     pki_path_base: "{{ pki_cnf.path_base }}/{{ pki_name }}"
     pki_path_ca: "{{ pki_path_base }}/{{ PKI_HC.dir.root_ca }}"
-    task_prefix_pki: "PKI | Instance '{{ pki_name }}'"
-    pki_vars_param: "--vars={{ pki_path_ca }}/vars"
+    task_prefix_pki: "PKI | RootCA '{{ pki_name }}'"
+    pki_vars_param: "--vars={{ pki_path_ca }}/vars --batch"
   loop_control:
     loop_var: pki_item
   with_dict: "{{ PKI.instances }}"
   no_log: true  # passwords
-  tags: always
+  tags: [instances, subcas, certs, certs_renew, certs_create, certs_revoke]
+  args:
+    apply:
+      tags: [instances]
 
 - name: PKI | Services
   ansible.builtin.import_tasks: services.yml
+  tags: services
 
 # todo: option to set-up nginx to server ca.crt and crl.pem to 'clients'

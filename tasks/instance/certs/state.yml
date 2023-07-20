@@ -1,0 +1,21 @@
+---
+
+- name: "{{ task_prefix_cert }} | Revoking certificate"
+  ansible.builtin.include_tasks: instance/certs/manage.yml
+  vars:
+    pki_cert_action: 'revoke'
+  when: "pki_cert_cnf.state in PKI_HC.cert.states.revoke"
+  tags: [certs, certs_renew, certs_revoke]
+  args:
+    apply:
+      tags: [certs, certs_renew, certs_revoke]
+
+- name: "{{ task_prefix_cert }} | Creating certificate"
+  ansible.builtin.include_tasks: instance/certs/manage.yml
+  vars:
+    pki_cert_action: 'create'
+  when: "pki_cert_cnf.state in PKI_HC.cert.states.create"
+  tags: [certs, certs_renew, certs_create]
+  args:
+    apply:
+      tags: [certs, renew_certs, certs_create]

@@ -9,7 +9,7 @@
   tags: always
 
 - name: "{{ task_prefix_pki }} | Validating vars"
-  ansible.builtin.include_tasks: validate_vars.yml
+  ansible.builtin.include_tasks: instance/validate_vars.yml
   vars:
     check_vars: "{{ pki_vars }}"
     check_task_prefix: "{{ task_prefix_pki }}"
@@ -18,14 +18,15 @@
   ansible.builtin.stat:
     path: "{{ pki_path_ca }}/{{ PKI_HC.file.ca }}"
   register: pki_init
+  tags: [subcas, certs, certs_renew, certs_create, certs_revoke]
 
 - name: "{{ task_prefix_pki }} | Initializing CA"
-  ansible.builtin.include_tasks: init_ca.yml
+  ansible.builtin.include_tasks: instance/init_ca.yml
   when: not pki_init.stat.exists
 
 - name: "{{ task_prefix_pki }} | Updating config"
   ansible.builtin.template:
-    src: 'templates/var/lib/pki/instance/vars.j2'
+    src: 'templates/var/local/lib/pki/instance/vars.j2'
     dest: "{{ pki_path_ca }}/vars"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
@@ -36,7 +37,7 @@
 
 - name: "{{ task_prefix_pki }} | Adding certificate extensions"
   ansible.builtin.template:
-    src: 'templates/var/lib/pki/instance/x509-types/COMMON.j2'
+    src: 'templates/var/local/lib/pki/instance/x509-types/COMMON.j2'
     dest: "{{ pki_path_ca }}/x509-types/COMMON"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
@@ -48,10 +49,11 @@
     combine(pki_cnf.extensions, recursive=true) }}"
 
 - name: "{{ task_prefix_pki }} | Processing SubCA's"
-  ansible.builtin.include_tasks: subca.yml
+  ansible.builtin.include_tasks: instance/subca.yml
   when: >
-    only_ca is undefined or
-    only_ca == pki_name_subca
+    pki_init.stat.exists and
+    (only_ca is undefined or
+    only_ca == pki_name_subca)
   vars:
     pki_name_subca: "{{ pki_subca_item.key | safe_key }}"
     pki_cnf_subca: "{{ defaults_subca | combine(pki_subca_item.value, recursive=true) }}"
@@ -60,16 +62,23 @@
     combine(pki_cnf_subca.vars, recursive=true) }}"
     pki_path_subca: "{{ pki_path_base }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
     task_prefix_subca: "{{ task_prefix_pki }} | SubCA '{{ pki_name_subca }}'"
-    pki_vars_param: "--vars={{ pki_path_subca }}/vars"
+    pki_vars_param: "--vars={{ pki_path_subca }}/vars --batch"
     pki_update_crl: false
   loop_control:
     loop_var: pki_subca_item
   with_dict: "{{ pki_cnf.sub_cas }}"
   no_log: true  # passwords
-  tags: always
+  tags: [subcas, certs, certs_renew, certs_create, certs_revoke]
+  args:
+    apply:
+      tags: [subcas]
 
 - name: "{{ task_prefix_pki }} | Updating privileges"
-  ansible.builtin.include_tasks: update_privileges.yml
+  ansible.builtin.include_tasks: instance/update_privileges.yml
   vars:
     easyrsa_base: "{{ pki_path_ca }}"
     privilege_task_prefix: "{{ task_prefix_pki }}"
+  tags: [always]
+  args:
+    apply:
+      tags: [always]

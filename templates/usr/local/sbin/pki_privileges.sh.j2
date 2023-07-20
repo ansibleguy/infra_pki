@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+set -eo pipefail
+
+PWD_FILE_CA="{{ PKI_HC.file.pwd_ca }}"
+PWD_FILE_CERT="{{ PKI_HC.file.pwd_cert }}"
+MODE_PRIVATE="{{ PKI_HC.mode.file }}"
+MODE_PUBLIC="{{ PKI.mode_public }}"
+MODE_DIR="{{ PKI_HC.mode.dir }}"
+MODE_PWD='400'  # if someone is already root - all hope is lost anyway
+DIRS_PRIVATE=({% for dir in PKI_HC.easyrsa.privileges.private.dirs %}'{{ dir }}' {% endfor %})
+DIRS_PUBLIC=({% for dir in PKI_HC.easyrsa.privileges.public.dirs %}'{{ dir }}' {% endfor %})
+FILES_PRIVATE=({% for dir in PKI_HC.easyrsa.privileges.private.files %}'{{ dir }}' {% endfor %})
+FILES_PUBLIC=({% for dir in PKI_HC.easyrsa.privileges.public.files %}'{{ dir }}' {% endfor %})
+
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]
+then
+  echo 'USAGE:'
+  echo ' 1 > Path to PKI CA directory'
+  echo ' 2 > Owner'
+  echo ' 3 > Group for public content'
+  echo ' 4 > Group for private content'
+  exit 1
+else
+  PKI_PATH="$1"
+  PKI_OWNER="$2"
+  PKI_GROUP_PUBLIC="$3"
+  PKI_GROUP_PRIVATE="$4"
+fi
+
+set -u
+
+PWD_FILE_CA="${PKI_PATH}/${PWD_FILE_CA}"
+PWD_FILE_CERT="${PKI_PATH}/${PWD_FILE_CERT}"
+
+function print_path() {
+  echo " > $1"
+}
+
+echo 'Updating: public directories and files'
+
+print_path "$PKI_PATH"
+chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "${PKI_PATH}"
+chmod "$MODE_DIR" "${PKI_PATH}"
+
+for dir in "${DIRS_PUBLIC[@]}"
+do
+  path="${PKI_PATH}/${dir}"
+  print_path "$path"
+  chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "$path"
+  chmod "$MODE_DIR" "$path"
+  if [ "$(ls -A "$path")" ]
+  then
+    print_path "$path/*"
+    chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "$path"/*
+    chmod "$MODE_PUBLIC" "$path"/*
+  fi
+done
+
+for f in "${FILES_PUBLIC[@]}"
+do
+  path="${PKI_PATH}/${f}"
+  if [ -f "$path" ]
+  then
+    print_path "$path"
+    chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "$path"
+    chmod "$MODE_PUBLIC" "$path"
+  fi
+done
+
+echo 'Updating: private directories and files'
+
+for dir in "${DIRS_PRIVATE[@]}"
+do
+  path="${PKI_PATH}/${dir}"
+  print_path "$path"
+  chown "$PKI_OWNER":"$PKI_GROUP_PRIVATE" "$path"
+  chmod "$MODE_DIR" "$path"
+  if [ "$(ls -A "$path")" ]
+  then
+    print_path "$path/*"
+    chown "$PKI_OWNER":"$PKI_GROUP_PRIVATE" "$path"/*
+    chmod "$MODE_PRIVATE" "$path"/*
+  fi
+done
+
+for f in "${FILES_PRIVATE[@]}"
+do
+  path="${PKI_PATH}/${f}"
+  if [ -f "$path" ]
+  then
+    print_path "$path"
+    chown "$PKI_OWNER":"$PKI_GROUP_PRIVATE" "$path"
+    chmod "$MODE_PRIVATE" "$path"
+  fi
+done
+
+echo 'Updating: password files'
+if [ -f "$PWD_FILE_CA" ]
+then
+  print_path "$PWD_FILE_CA"
+  chown root:root "$PWD_FILE_CA"
+  chmod "$MODE_PWD" "$PWD_FILE_CA"
+fi
+if [ -f "$PWD_FILE_CERT" ]
+then
+  print_path "$PWD_FILE_CERT"
+  chown root:root "$PWD_FILE_CERT"
+  chmod "$MODE_PWD" "$PWD_FILE_CERT"
+fi
+
+echo 'DONE'

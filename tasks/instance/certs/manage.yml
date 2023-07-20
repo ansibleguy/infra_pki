@@ -1,0 +1,52 @@
+---
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | {{ pki_cert_action | capitalize }} | Debug info"
+  ansible.builtin.debug:
+    msg: "Running command: \"{{ PKI_HC.path.script }}/pki_cert.sh
+    '{{ pki_path_subca }}' '{{ pki_cert_action }}' '{{ pki_cert_type }}' '{{ pki_cert_file }}'\""
+  when: debug | bool
+
+- name: "{{ task_prefix_cert }} | '{{ pki_cert_name }}' | Checking that password meets the requirements"
+  ansible.builtin.assert:
+    that:
+      - pki_cert_pwd | meets_password_complexity(PKI_HC)
+  vars:
+    pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cnf_subca.pwd_cert) | default('') }}"
+  tags: always
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | {{ pki_cert_action | capitalize }}"
+  ansible.builtin.command: "{{ PKI_HC.path.script }}/pki_cert.sh
+  '{{ pki_path_subca }}' '{{ pki_cert_action }}' '{{ pki_cert_type }}' '{{ pki_cert_file }}'"
+  environment:
+    PKI_CERT_CN: "{{ pki_cert_cnf.cn }}"
+    PKI_OWNER: "{{ pki_cnf.owner }}"
+    PKI_GROUP_PRIVATE: "{{ pki_cnf.owner }}"
+    PKI_GROUP_PUBLIC: "{{ pki_cnf.group_read }}"
+    PKI_CERT_SAN: "{{ pki_cert_cnf | build_san(PKI_HC.san_mapping) }}"
+    PKI_PWD_CA: "{{ pki_subca_pwd | default('') }}"
+    PKI_PWD_CERT: "{{ pki_cert_pwd }}"
+    PKI_CERT_EXPORT_AS: "{% for fmt, export in pki_cert_export.items() %}\
+    {% if export | bool %}\
+    {{ fmt }}{% if not loop.last %},{% endif %}\
+    {% endif %}\
+    {% endfor %}\
+    {% if not pki_cert_export.values() is any %}-{% endif %}"
+  no_log: true  # passwords
+  register: pki_cert_result
+  changed_when: "'CHANGED' in pki_cert_result.stdout"
+  ignore_errors: true
+  vars:
+    pki_cert_export: "{{ pki_cert_cnf.export | combine(pki_cnf_subca.export) | combine(defaults_cert.export) }}"
+    pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cnf_subca.pwd_cert) | default('') }}"
+    pki_cert_file: "{{ pki_cert_type }}_{{ pki_cert_name }}"
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | {{ pki_cert_action | capitalize }} | Debug info"
+  ansible.builtin.debug:
+    var: pki_cert_result.stdout_lines
+  when: debug | bool
+
+- name: "{{ task_prefix_certs }} | '{{ pki_cert_name }}' | {{ pki_cert_action | capitalize }} | Show pretty error"
+  ansible.builtin.fail:
+    msg: "It seems the certificate action failed. Please analyze the output to resolve the issue!
+    STDERR: '{{ pki_cert_result.stderr_lines | default(pki_cert_result.msg) }}'"
+  when: pki_cert_result.failed

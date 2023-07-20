@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+
+# {{ ansible_managed }}
+# ansibleguy.infra_pki
+
+set -eo pipefail
+
+DEBUG=1
+CHANGED=0
+
+EXT_PRIVATE=('p1' 'p8' 'p12' 'unencrypted.key' 'key')
+EXT_PUBLIC=('crt' 'chain.crt' 'p7b')
+PKCS_FORMATS=('1' '7' '8' '12')
+UPDATE_CRL=0
+
+PKI_ROOTCA_DIR="{{ PKI_HC.dir.root_ca }}"
+PKI_SCRIPT="{{ PKI_SCRIPT }}"
+PWD_FILE_CA="{{ PKI_HC.file.pwd_ca }}"
+PWD_FILE_CERT="{{ PKI_HC.file.pwd_cert }}"
+MODE_PRIVATE="{{ PKI_HC.mode.file }}"
+MODE_PUBLIC="{{ PKI.mode_public }}"
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]
+then
+  # vars that will be needed either way
+  echo 'USAGE:'
+  echo ' 1 > Path to PKI Sub-CA directory'
+  echo ' 2 > Action (create,renew,revoke)'
+  echo ' 3 > Certificate type'
+  echo ' 4 > Certificate file-name'
+  exit 1
+else
+  PKI_PATH="$1"
+  CERT_ACTION="$2"
+  CERT_TYPE="$3"
+  CERT_FILE_NAME="$4"
+
+  PKI_PATH_ROOT="${PKI_PATH}/../${PKI_ROOTCA_DIR}"
+  PWD_FILE_CA="${PKI_PATH}/${PWD_FILE_CA}"
+  PWD_FILE_CERT="${PKI_PATH}/${PWD_FILE_CERT}"
+  PKI_PATH_PUBLIC="${PKI_PATH}/issued"
+  PKI_PATH_PRIVATE="${PKI_PATH}/private"
+
+  if [ -z "$PKI_PWD_CA" ]
+  then
+    # check sub-ca password
+    if ! [ -f "$PWD_FILE_CA" ]
+    then
+      echo "ERROR: CA-Password was neither provided as environmental-variable, nor could its password file '${PWD_FILE_CA}' be found!"
+      exit 1
+    else
+      PKI_PWD_CA=$(cat "$PWD_FILE_CA")
+      if [ -z "$PKI_PWD_CA" ]
+      then
+        echo "ERROR: CA password file is empty: '${PWD_FILE_CA}'"
+        exit 1
+      fi
+    fi
+  fi
+
+  if [[ "$CERT_ACTION" == 'create' ]] || [[ "$CERT_ACTION" == 'renew' ]]
+  then
+    # check env-vars
+    if [ -z "$PKI_OWNER" ] || [ -z "$PKI_GROUP_PRIVATE" ] || [ -z "$PKI_GROUP_PUBLIC" ] || [ -z "$PKI_CERT_CN" ]
+    then
+      echo 'At least one needed environmental-variable was not provided!'
+      echo "Needed: 'PKI_CERT_CN', 'PKI_OWNER', 'PKI_GROUP_PRIVATE', 'PKI_GROUP_PUBLIC'"
+      exit 1
+    fi
+    if [ -z "$PKI_CERT_SAN" ]
+    then
+      echo "Warning: Environmental-variable 'PKI_CERT_SAN' was not provided!"
+    fi
+    if [ -z "$PKI_CERT_EXPORT_AS" ]
+    then
+      PKI_CERT_EXPORT_AS='p12,chain'
+      echo "Info: Environmental-variable 'PKI_CERT_EXPORT_AS' was not provided => using default: '$PKI_CERT_EXPORT_AS'!"
+    fi
+    # check cert password
+    if [ -z "$PKI_PWD_CERT" ]
+    then
+      if ! [ -f "$PWD_FILE_CERT" ]
+      then
+        echo "ERROR: Certificate-Password was neither provided as environmental-variable (PKI_PWD_CERT), nor could its password file '${PWD_FILE_CERT}' be found!"
+        exit 1
+      else
+        PKI_PWD_CERT=$(cat "$PWD_FILE_CERT")
+        if [ -z "$PWD_FILE_CERT" ]
+        then
+          echo "ERROR: Certificate password file is empty: '${PWD_FILE_CERT}'"
+          exit 1
+        fi
+      fi
+    fi
+  fi
+fi
+
+set -u
+
+function pki_script() {
+  CMD="$1"
+  PASSIN="$2"
+  PASSOUT="$3"
+  if [[ "$DEBUG" == "1" ]]
+  then
+    echo "DEBUG: Executing EasyRSA script => \"'EASYRSA_PKI=$PKI_PATH EASYRSA_PASSIN=xxx EASYRSA_PASSOUT=xxx $PKI_SCRIPT --batch --vars=${PKI_PATH}/vars $CMD'\""
+  fi
+
+  # shellcheck disable=SC2086
+  if [ -z "$PASSIN" ] && [ -z "$PASSOUT" ]
+  then
+    EASYRSA_PKI="$PKI_PATH" $PKI_SCRIPT --batch --vars "${PKI_PATH}/vars" $CMD
+  elif [ -z "$PASSIN" ]
+  then
+    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSOUT="pass:${PASSOUT}" $PKI_SCRIPT --batch --vars="${PKI_PATH}/vars" $CMD
+  elif [ -z "$PASSOUT" ]
+  then
+    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSIN="pass:${PASSIN}" $PKI_SCRIPT --batch --vars="${PKI_PATH}/vars" $CMD
+  else
+    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSIN="pass:${PASSIN}" EASYRSA_PASSOUT="pass:${PASSOUT}" $PKI_SCRIPT --batch --vars="${PKI_PATH}/vars" $CMD
+  fi
+}
+
+function export_as_p() {
+  pn="$1"
+  if echo "$PKI_CERT_EXPORT_AS" | grep -E "p${pn}|pkcs${pn}" | grep -Evc "p${pn}[0-9]|pkcs${pn}[0-9]"
+  then
+    echo "Exporting key in pkcs${pn} format"
+    pki_script "export-p${pn} ${CERT_FILE_NAME}" "$PKI_PWD_CERT" "$PKI_PWD_CERT"
+  fi
+}
+
+if [[ "$CERT_ACTION" == 'revoke' ]] || [[ "$CERT_ACTION" == 'renew' ]]
+then
+  if [ -f "${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.crt" ]
+  then
+    echo 'Revoking certificate'
+    CHANGED=1
+    UPDATE_CRL=1
+    pki_script "revoke ${CERT_FILE_NAME}" "$PKI_PWD_CA" ''
+    echo 'Removing orphaned files'
+    for ext in "${EXT_PRIVATE[@]}"
+    do
+      path="${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.${ext}"
+      if [ -f "$path" ]
+      then
+        rm "$path"
+      fi
+    done
+    for ext in "${EXT_PUBLIC[@]}"
+    do
+      path="${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.${ext}"
+      if [ -f "$path" ]
+      then
+        rm "$path"
+      fi
+    done
+  fi
+fi
+
+if [[ "$CERT_ACTION" == 'create' ]] || [[ "$CERT_ACTION" == 'renew' ]]
+then
+  if ! [ -f "${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.key" ] || ! [ -f "${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.crt" ]
+  then
+    echo 'Creating certificate'
+    CHANGED=1
+    export EASYRSA_REQ_CN="$PKI_CERT_CN"
+    pki_script "gen-req ${CERT_FILE_NAME}" '' "$PKI_PWD_CERT"
+    echo 'Signing certificate'
+    if [ -z "$PKI_CERT_SAN" ]
+    then
+      pki_script "--no-text sign-req ${CERT_TYPE} ${CERT_FILE_NAME}" "$PKI_PWD_CA" "$PKI_PWD_CERT"
+    else
+      pki_script "--subject-alt-name=${PKI_CERT_SAN} --no-text sign-req ${CERT_TYPE} ${CERT_FILE_NAME}" "$PKI_PWD_CA" "$PKI_PWD_CERT"
+    fi
+
+    if [[ "$PKI_CERT_EXPORT_AS" != '-' ]]
+    then
+      echo "Exporting in additional formats: '${PKI_CERT_EXPORT_AS}'"
+
+      if echo "$PKI_CERT_EXPORT_AS" | grep -q 'chain'
+      then
+        echo 'Creating certificate-chain'
+        cat "${PKI_PATH_ROOT}/ca.crt" "${PKI_PATH}/ca.crt" "${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.crt" > "${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.chain.crt"
+      fi
+      if echo "$PKI_CERT_EXPORT_AS" | grep -q 'unencrypted'
+      then
+        echo 'Exporting unencrypted key'
+        # shellcheck disable=SC2002
+        pki_algo=$(cat "${PKI_PATH}/vars" | grep 'EASYRSA_ALGO' | cut -d ' ' -f 3)
+        openssl "$pki_algo" --passin="pass:${PKI_PWD_CERT}" -in "${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.key" -out "${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.unencrypted.key"
+      fi
+      for pn in "${PKCS_FORMATS[@]}"
+      do
+        export_as_p "$pn"
+      done
+    fi
+
+    echo 'Setting privileges'
+    for ext in "${EXT_PRIVATE[@]}"
+    do
+      path="${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.${ext}"
+      if [ -f "$path" ]
+      then
+        chown "$PKI_OWNER":"$PKI_GROUP_PRIVATE" "$path"
+        chmod "$MODE_PRIVATE" "$path"
+      fi
+    done
+    for ext in "${EXT_PUBLIC[@]}"
+    do
+      path="${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.${ext}"
+      if [ -f "$path" ]
+      then
+        chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "$path"
+        chmod "$MODE_PUBLIC" "$path"
+      fi
+    done
+  fi
+fi
+
+if [[ "$UPDATE_CRL" == "1" ]]
+then
+  echo 'Updating CRL'
+  pki_script 'gen-crl' "$PKI_PWD_CA" ''
+  chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "${PKI_PATH}/crl.pem"
+  chmod "$MODE_PUBLIC" "${PKI_PATH}/crl.pem"
+fi
+
+if [[ "$CHANGED" == '1' ]]
+then
+  echo 'CHANGED'
+else
+  echo 'UP-TO-DATE'
+fi

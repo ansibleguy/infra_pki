@@ -12,13 +12,10 @@
   ansible.builtin.set_fact:
     pki_path_subca: "{{ pki_cnf.path_base }}/{{ pki_name }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
     pki_cert_name: "{{ pki_cert_name | safe_key }}"
-    pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cert_pwd) | default('') }}"
-    pki_cert_file: "{{ pki_cert_type }}_{{ pki_cert_name }}"
-    pki_cert_no_pass: "{{ pki_cert_cnf.no_pass | default(pki_cnf_subca.cert_no_pass, true) }}"
 
 - name: PKI | Single Cert | Setting vars (3/3)
   ansible.builtin.set_fact:
-    pki_vars_param: "--vars={{ pki_path_subca }}/vars"
+    pki_vars_param: "--vars={{ pki_path_subca }}/vars --batch"
     provided_pwd_cert: "{{ pki_cert_pwd | default(none, true) is not none }}"
     provided_pwd_subca: "{{ pki_subca_pwd | default(none, true) is not none }}"
 
@@ -30,7 +27,6 @@
       - pki_cert_name | default(none, true) is not none
       - pki_cert_action in ['create', 'renew', 'revoke']
       - pki_cert_type in PKI_HC.cert.types
-      - PKI.save_passwords | bool or (provided_pwd_cert | bool and pki_cert_pwd | meets_password_complexity(PKI_HC))
       - PKI.save_passwords | bool or provided_pwd_subca | bool
       - pki_cert_cnf | is_dict
 
@@ -40,53 +36,25 @@
   register: pki_sc_subca_file
   failed_when: not pki_sc_subca_file.stat.exists
 
-- name: "{{ task_prefix_cert }} | Loading passwords"
+- name: "{{ task_prefix_cert }} | Loading password"
   block:
     - name: "{{ task_prefix_cert }} | Retrieving CA-password from file"
       ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
-      register: pki_subca_pwd_file
+      register: pki_subca_pwd_file_txt
       changed_when: false
       no_log: true
-      when: not provided_pwd_subca | bool
 
     - name: "{{ task_prefix_cert }} | Setting CA-password to saved one"
       ansible.builtin.set_fact:
-        pki_subca_pwd: "{{ pki_subca_pwd_file.stdout }}"
-      when: not provided_pwd_subca | bool
+        pki_subca_pwd: "{{ pki_subca_pwd_file_txt.stdout }}"
+  when: PKI.save_passwords | bool
 
-    - name: "{{ task_prefix_cert }} | Retrieving Cert-password from file"
-      ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_cert }}"
-      register: pki_all_cert_pwd_file
-      changed_when: false
-      no_log: true
-      when: not provided_pwd_cert | bool
+- name: "{{ task_prefix_cert }} | No or empty Sub-CA password"
+  ansible.builtin.fail:
+    msg: 'The Sub-CA password is empty or was not provided!'
+  when: pki_subca_pwd | default(none, true) is none
 
-    - name: "{{ task_prefix_cert }} | Setting Cert-password to saved one"
-      ansible.builtin.set_fact:
-        pki_cert_pwd: "{{ pki_all_cert_pwd_file.stdout }}"
-      failed_when: pki_all_cert_pwd_file.stdout | default(none, true) is none
-      when: not provided_pwd_cert | bool
-  when:
-    - not provided_pwd_cert | bool or not provided_pwd_subca | bool
-    - PKI.save_passwords | bool
-
-- name: "{{ task_prefix_cert }} | Creating certificate"
-  ansible.builtin.import_tasks: instance/certs/revoke.yml
-  when: pki_cert_action in ['revoke', 'renew']
-
-- name: "{{ task_prefix_cert }} | Creating certificate"
-  ansible.builtin.import_tasks: instance/certs/create.yml
-  when: pki_cert_action in ['create', 'renew']
-
-- name: "{{ task_prefix_cert }} | Updating CRL"
-  ansible.builtin.include_tasks: update_crl.yml
+- name: "{{ task_prefix_cert }} | Managing certificate"
+  ansible.builtin.import_tasks: instance/certs/manage.yml
   vars:
-    easyrsa_base: "{{ pki_path_subca }}"
-    crl_task_prefix: "{{ task_prefix_subca }}"
-  when: pki_cert_action in ['revoke', 'renew']
-
-- name: "{{ task_prefix_cert }} | Updating privileges"
-  ansible.builtin.include_tasks: update_privileges.yml
-  vars:
-    easyrsa_base: "{{ pki_path_subca }}"
-    privilege_task_prefix: "{{ task_prefix_cert }}"
+    task_prefix_certs: "{{ task_prefix_cert }}"

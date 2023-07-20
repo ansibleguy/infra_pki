@@ -6,22 +6,13 @@
       - pki_cnf_subca.certs | is_dict
   tags: always
 
-- name: "{{ task_prefix_subca }} | Certs | Certificate password"
-  ansible.builtin.include_tasks: pwd.yml
-  when: not pki_cnf_subca.cert_no_pass | bool
-  tags: always
-  args:
-    apply:
-      tags: [certs, renew_certs, create_certs, revoke_certs]
-
 # todo: pull existing certs to compare against config for purging
 
 - name: "{{ task_prefix_subca }} | Certs | Processing certificate types"
-  ansible.builtin.include_tasks: types.yml
-  tags: always
+  ansible.builtin.include_tasks: instance/certs/single.yml
   args:
     apply:
-      tags: [certs, renew_certs, create_certs, revoke_certs]
+      tags: [certs, certs_renew, certs_create, certs_revoke]
   vars:
     pki_cert_type: "{{ pki_cert_type_item.key }}"
     pki_certs: "{{ pki_cert_type_item.value }}"

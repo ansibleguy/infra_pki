@@ -44,7 +44,7 @@ ansible-galaxy install -r requirements.yml
 
   * **Default config**:
     * Paths:
-      * PKI base: '/var/lib/pki'
+      * PKI base: '/var/local/lib/pki'
       * Script: '/usr/local/sbin/easyrsa'
     * PKI user: 'pki'
     * Read-only group: 'pki_read'
@@ -76,13 +76,99 @@ ansible-galaxy install -r requirements.yml
     * Purging of orphaned (_existing but not configured_) certificates
     * Encryption of certificate private-keys (_non CA/Sub-CA_)
 
+### Example
+
+Check out the more detailed example: [Example](https://github.com/ansibleguy/infra_pki/blob/latest/Example.md)
+
+----
+
+## Usage
+
+### Config
+
+Define the config as needed:
+
+#### Minimal setup
+
+```yaml
+pki:
+  crl_distribution:
+    domain: 'crl.ansibleguy.net'
+
+  instances:
+    root:
+      pwd_ca: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        ...
+
+      sub_cas:
+        main:
+          pwd_ca: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            ...
+
+          certs:
+            server:  # server certificates
+              ansibleguy_net:
+                cn: 'AnsibleGuy Website'
+                san:
+                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                  ip: '135.181.170.217'
+                  uri: 'https://www-ansibleguy.net'
+
+            client:  # client certificates
+              workstation1:
+                cn: 'AnsibleGuy Workstation'
+```
+
+
+You might want to use 'ansible-vault' to encrypt your passwords:
+```bash
+ansible-vault encrypt_string
+```
+
+### Execution
+
+Run the playbook:
+```bash
+ansible-playbook -K -D -i inventory/hosts.yml playbook_pki.yml
+```
+
+There is also an 'entrypoint' for managing single certificates - that can be useful if they are automagically managed by other roles.
+```bash
+# to run it interactively
+ansible-playbook -K -D -i inventory/hosts.yml playbook_single_cert.yml
+```
+
+
+There are also some useful **tags** available:
+* instances => skip basic tasks but process all PKI-instances (RootCA's)
+* subcas => skip basic and instance (RootCA) tasks but process all SubCA tasks
+* certs => only process task related to managing certificates
+* certs_create => create non-existent certificates
+* certs_renew => renew certificates that have the state 'renewed' set
+* certs_revoke => revoke certificates that have the state 'revoked' or 'absent' set
+
+To debug errors - you can set the 'debug' variable at runtime:
+```bash
+ansible-playbook -K -D -i inventory/hosts.yml playbook.yml -e debug=yes
+```
+
+----
 
 ## Info
 
 
 * **Note:** Most of the role's functionality can be opted in or out.
 
-  For all available options - see the default-config located in the main defaults-file!
+  For all available options - see the [default-config located in the main defaults-file](https://github.com/ansibleguy/infra_pki/blob/latest/defaults/main/1_main.yml)!
+
+
+* **Info:** To make sure the role config 'behaves' as expected - it tested by this role using molecule!
+
+  Per example: The certificate-attributes, file- & directory-permissions & -ownership are checked after generating multiple certificates using multiple Root- & Sub-CA's.
+
+  See [Verification Tests](https://github.com/ansibleguy/infra_pki/blob/latest/molecule/default/verify.yml)
 
 
 * **Warning:** Not every setting/variable you provide will be checked for validity. Bad config might break the role!
@@ -148,180 +234,3 @@ ansible-galaxy install -r requirements.yml
   * 'present' or 'created' to make sure a certificate exists
   * 'absent' or 'revoked' to make sure a certificate does not exist
   * 'renewed' to renew a certificate
-
-
-## Usage
-
-### Config
-
-Define the config as needed:
-
-#### Minimal setup
-
-```yaml
-pki:
-  crl_distribution:
-    domain: 'crl.ansibleguy.net'
-
-  instances:
-    root:
-      pwd_ca: !vault |
-        $ANSIBLE_VAULT;1.1;AES256
-        ...
-
-      sub_cas:
-        main:
-          pwd_ca: !vault |
-            $ANSIBLE_VAULT;1.1;AES256
-            ...
-
-          certs:
-            server:  # server certificates
-              ansibleguy_net:
-                cn: 'AnsibleGuy Website'
-                san:
-                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
-                  ip: '135.181.170.217'
-                  uri: 'https://www-ansibleguy.net'
-
-            client:  # client certificates
-              workstation1:
-                cn: 'AnsibleGuy Workstation'
-```
-
-#### More detailed options
-
-```yaml
-pki:
-  manage:
-    users: true  # if set to false - the users and groups will need to be created BEFORE running the initialization
-  save_passwords: true  # save ca/sub-ca passwords to file (only root read-access)
-  purge: true  # remove certificates that exist on the CA but not in your config
-
-  crl_distribution:
-    domain: 'crl.ansibleguy.net'  # domain that will be added to all certificates as CRL-distribution-point
-    protocol: 'http'
-  
-  vars:
-    req_country: 'AT'
-    req_province: 'Styria'
-    req_org: 'AnsibleGuy'
-    req_email: 'pki@ansibleguy.net'
-    ca_expire: 9125  # 25 years
-    cert_expire: 5475  # 15 years; sub-ca runtime
-
-  instances:
-    pki_name:
-      ca_cn: 'AnsibleGuy CA'
-      vars:
-        ca_expire: 5475  # 15 years
-        cert_expire: 1095  # 3 years
-        key_size: 4096
-        digest: 'sha512'
-
-      sub_cas:
-        internal:
-          ca_cn: 'AnsibleGuy Internal SubCA'
-
-          pwd_ca: !vault |
-            $ANSIBLE_VAULT;1.1;AES256
-            ...
-
-          cert_no_pass: false  # save private keys in encrypted format
-          pwd_cert: !vault |
-            $ANSIBLE_VAULT;1.1;AES256
-            ...
-
-          vars:
-            key_size: 2048
-
-          export:  # different formats to export certificates to
-            p12: true
-            p7: true
-
-          certs:
-            server:  # server certificates
-              ansibleguy_net:
-                cn: 'AnsibleGuy Website'
-                san:  # subject-alternative-names
-                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
-                  ip: '135.181.170.217'
-                  uri: 'https://www-ansibleguy.net'
-
-              tester:
-                cn: 'AnsibleGuy Test Server'
-                san:
-                  dns: 'test.ansibleguy.net'
-                export:
-                  unencrypted: true  # creates 'server_tester.unencrypted.key'
-
-              old:
-                state: absent  # present/created/renewed/revoked/absent
-
-            email:  # mail certificates
-              guy:
-                cn: 'AnsibleGuy Mail'
-                san:
-                  email: 'guy@ansibleguy.net'
-
-        vpn:
-          ca_cn: 'AnsibleGuy VPN SubCA'
-          vars:
-            cert_expire: 365
-
-          certs:
-            client:  # client certificates
-              workstation1:
-                cn: 'AnsibleGuy Workstation 1'
-```
-
-This is how the PKI is structured on the filesystem:
-
-  ```bash
-  /var/lib/pki/pki_name
-  ├── ca
-  │   ├── certs_by_serial
-  │   ├── inline
-  │   ├── issued
-  │   ├── private
-  │   ├── reqs
-  │   └── revoked
-  ├── subca_internal
-  │   ├── certs_by_serial
-  │   ├── inline
-  │   ├── issued
-  │   ├── private
-  │   ├── reqs
-  │   └── revoked
-  └── subca_vpn
-      ├── certs_by_serial
-      ├── inline
-      ├── issued
-      ├── private
-      ├── reqs
-      └── revoked
-  ```
-
-
-You might want to use 'ansible-vault' to encrypt your passwords:
-```bash
-ansible-vault encrypt_string
-```
-
-### Execution
-
-Run the playbook:
-```bash
-ansible-playbook -K -D -i inventory/hosts.yml playbook.yml
-```
-
-There are also some useful **tags** available:
-* certs => process certificates
-* create_certs => create non-existent certificates
-* renew_certs => renew certificates that have the state 'renewed' set
-* revoke_certs => revoke certificates that have the state 'revoked' or 'absent' set
-
-To debug errors - you can set the 'debug' variable at runtime:
-```bash
-ansible-playbook -K -D -i inventory/hosts.yml playbook.yml -e debug=yes
-```

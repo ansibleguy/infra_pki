@@ -12,7 +12,7 @@
   when: not pki_subca_cakey.stat.exists
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Getting CA password"
-  ansible.builtin.include_tasks: pwd_ca.yml
+  ansible.builtin.include_tasks: instance/pwd_ca.yml
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Adding directory"
   ansible.builtin.file:
@@ -34,7 +34,7 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Copying config"
   ansible.builtin.template:
-    src: 'templates/var/lib/pki/instance/vars.j2'
+    src: 'templates/var/local/lib/pki/instance/vars.j2'
     dest: "{{ pki_path_subca }}/vars"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
@@ -44,45 +44,37 @@
     easyrsa_base: "{{ pki_path_subca }}"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Initializing"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
-    responses:
-      "Confirm removal": 'yes'
+  ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Generating SubCA"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} build-ca subca"
-    responses:
-      "Enter New CA Key Passphrase": "{{ pki_subca_pwd }}"
-      "Confirm New CA Key Passphrase": "{{ pki_subca_pwd }}"
-      "Common Name": "{{ pki_cnf_subca.ca_cn }}"
+  ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} build-ca subca"
   environment:
     EASYRSA_PKI: "{{ pki_path_subca }}"
+    EASYRSA_REQ_CN: "{{ pki_cnf_subca.ca_cn }}"
+    EASYRSA_PASSIN: "pass:{{ pki_subca_pwd }}"
+    EASYRSA_PASSOUT: "pass:{{ pki_subca_pwd }}"
   no_log: true
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Importing SubCA request into CA"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
   import-req {{ pki_path_subca }}/reqs/ca.req subca_{{ pki_name_subca }}"
   vars:
-    pki_vars_param: "--vars={{ pki_path_ca }}/vars"
+    pki_vars_param: "--vars={{ pki_path_ca }}/vars --batch"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
   args:
     creates: "{{ pki_path_ca }}/reqs/subca_{{ pki_name_subca }}.req"
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Signing SubCA via CA"
-  ansible.builtin.expect:
-    command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
-    sign-req ca subca_{{ pki_name_subca }}"
-    responses:
-      "Confirm": 'yes'
-      "pass phrase": "{{ pki_ca_pwd }}"
+  ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} --no-text sign-req ca subca_{{ pki_name_subca }}"
   vars:
-    pki_vars_param: "--vars={{ pki_path_ca }}/vars"
+    pki_vars_param: "--vars={{ pki_path_ca }}/vars --batch"
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
+    EASYRSA_PASSIN: "pass:{{ pki_ca_pwd }}"
+    EASYRSA_REQ_CN: "{{ pki_cnf_subca.ca_cn }}"
   args:
     creates: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}.crt"
   no_log: true
@@ -106,8 +98,32 @@
   no_log: true
   when: PKI.save_passwords | bool
 
+- name: "{{ task_prefix_subca }} | Init-SubCA | Saving certificate password"
+  ansible.builtin.copy:
+    dest: "{{ pki_path_subca }}/{{ PKI_HC.file.pwd_cert }}"
+    content: "{{ pki_cnf_subca.pwd_cert }}"
+    mode: 0400  # if someone is already root - all hope is lost anyway
+    owner: 'root'
+    group: 'root'
+  no_log: true
+  when:
+    - PKI.save_passwords | bool
+    - pki_cnf_subca.pwd_cert is defined
+    - pki_cnf_subca.pwd_cert | meets_password_complexity(PKI_HC)
+
+- name: "{{ task_prefix_subca }} | Init-SubCA | Generating CRL"
+  ansible.builtin.include_tasks: instance/update_crl.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"
+    easyrsa_ca_pwd: "{{ pki_subca_pwd }}"
+    crl_task_prefix: "{{ task_prefix_subca }}"
+
 - name: "{{ task_prefix_subca }} | Init-SubCA | Updating privileges"
-  ansible.builtin.include_tasks: update_privileges.yml
+  ansible.builtin.include_tasks: instance/update_privileges.yml
   vars:
     easyrsa_base: "{{ pki_path_subca }}"
     privilege_task_prefix: "{{ task_prefix_subca }}"
+  tags: [always]
+  args:
+    apply:
+      tags: [always]

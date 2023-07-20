@@ -2,6 +2,10 @@
 
 - name: Converge
   hosts: test-ag-infra_pki-1
+  module_defaults:
+    ansible.builtin.setup:
+      gather_subset: ['date_time']
+  gather_facts: true
   vars:
     pki:
       save_passwords: true
@@ -26,7 +30,6 @@
               ca_cn: 'TestSubCA1'
               pwd_ca: 'tEst54321'
               pwd_cert: 'teSt32521'
-              cert_no_pass: false
               vars:
                 req_org: 'test1org'
 
@@ -43,6 +46,7 @@
                       uri: 'https://www.ansibleguy.net'
 
                   test2:
+                    # state: 'renewed'  # working on first run; but failing idempotence
 
                 client:
                   wkst1:
@@ -59,7 +63,6 @@
             sub2:
               pwd_ca: 'tEst543212'
               pwd_cert: 'teSt325212'
-              cert_no_pass: true
               vars:
                 req_org: 'test2org'
                 req_ou: 'test2ou'
@@ -108,8 +111,12 @@
 - name: Converge Single Certificate
   hosts: test-ag-infra_pki-1
   become: true
-  gather_facts: false
+  module_defaults:
+    ansible.builtin.setup:
+      gather_subset: ['date_time']
+  gather_facts: true
   vars:
+    # debug: true
     pki:
       save_passwords: true
       crl_distribution:
@@ -130,13 +137,11 @@
               ca_cn: 'TestSubCA1'
               pwd_ca: 'tEst54321'
               pwd_cert: 'teSt32521'
-              cert_no_pass: false
               vars:
                 req_org: 'test1org'
 
     pki_name: 'test1'
     pki_name_subca: 'sub1'
-    pki_cert_action: 'create'
     pki_cert_name: 'single'
     pki_cert_type: 'server'
     pki_cert_cnf:
@@ -150,7 +155,37 @@
         dns: ['single.test']
 
   tasks:
-    - name: PKI | Managing single certificate
+    - name: PKI | Creating single certificate
       ansible.builtin.import_role:
         name: ansibleguy.infra_pki
         tasks_from: single_cert.yml
+      vars:
+        pki_cert_action: 'create'
+        pki_subca_pwd: 'none'
+
+    - name: PKI | Renewing single certificate
+      ansible.builtin.import_role:
+        name: ansibleguy.infra_pki
+        tasks_from: single_cert.yml
+      vars:
+        pki_cert_action: 'renew'
+        pki_subca_pwd: 'none'
+      tags: [molecule-idempotence-notest]
+
+    - name: PKI | Revoking single certificate
+      ansible.builtin.import_role:
+        name: ansibleguy.infra_pki
+        tasks_from: single_cert.yml
+      vars:
+        pki_cert_action: 'revoke'
+        pki_subca_pwd: 'none'
+      tags: [molecule-idempotence-notest]
+
+    - name: PKI | Renewing single certificate (does not yet exist)
+      ansible.builtin.import_role:
+        name: ansibleguy.infra_pki
+        tasks_from: single_cert.yml
+      vars:
+        pki_cert_action: 'renew'
+        pki_subca_pwd: 'none'
+      tags: [molecule-idempotence-notest]

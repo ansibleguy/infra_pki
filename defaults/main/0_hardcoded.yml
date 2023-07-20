@@ -3,7 +3,7 @@
 PKI_HC:
   easyrsa:
     path:
-      template: '/var/lib/easyrsa_template'  # version number = sub-directory
+      template: '/var/local/lib/easyrsa_template'  # version number = sub-directory
     dl: 'https://github.com/OpenVPN/easy-rsa/releases/download'
     vars_ignore: ['temp_dir', 'ext_dir', 'no_pass', 'ssl_conf', 'batch', 'pki']
     pwd_min_length: 8

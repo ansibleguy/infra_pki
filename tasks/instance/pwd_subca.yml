@@ -8,7 +8,7 @@
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Retrieving CA-password from file"
   ansible.builtin.command: "cat {{ pki_path_subca }}/{{ PKI_HC.file.pwd_ca }}"
-  register: pki_subca_pwd_file
+  register: pki_subca_pwd_file_txt
   changed_when: false
   no_log: true
   when:
@@ -17,7 +17,7 @@
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Setting CA-password to saved one"
   ansible.builtin.set_fact:
-    pki_subca_pwd: "{{ pki_subca_pwd_file.stdout }}"
+    pki_subca_pwd: "{{ pki_subca_pwd_file_txt.stdout }}"
   when:
     - PKI.save_passwords | bool
     - pki_subca_pwd_file.stat.exists
@@ -34,13 +34,6 @@
   register: pki_subca_pwd_raw
   when: pki_subca_pwd is undefined
   delegate_to: localhost
-
-- name: "{{ task_prefix_subca }} | PWD-SubCA | Debugging"
-  ansible.builtin.debug:
-    msg: "{{ hostvars['localhost'] }}"
-  when:
-    - pki_subca_pwd is undefined
-    - "'pki_subca_pwd_raw' not in hostvars['localhost']"
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Setting CA-password to user-input"
   ansible.builtin.set_fact:

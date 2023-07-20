@@ -8,16 +8,12 @@
   tags: always
 
 - name: "{{ task_prefix_certs }} | Processing certificates"
-  ansible.builtin.include_tasks: state_switch.yml
+  ansible.builtin.include_tasks: instance/certs/state.yml
   vars:
     pki_cert_name: "{{ pki_cert_item.key | safe_key }}"
     pki_cert_cnf: "{{ defaults_cert | combine(pki_cert_item.value, recursive=true) }}"
-    pki_cert_file: "{{ pki_cert_type }}_{{ pki_cert_name }}"
-    pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cert_pwd) | default('') }}"
-    pki_cert_no_pass: "{{ pki_cert_cnf.no_pass | default(pki_cnf_subca.cert_no_pass, true) }}"
     task_prefix_cert: "{{ task_prefix_certs }} | '{{ pki_cert_name }}'"
   loop_control:
     loop_var: pki_cert_item
   with_dict: "{{ pki_certs }}"
-  tags: always
   no_log: true

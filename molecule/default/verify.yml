@@ -4,17 +4,24 @@
   hosts: all
   gather_facts: false
   vars:
-    pki_base: '/var/lib/pki'
+    pki_base: '/var/local/lib/pki'
     t1ca: "{{ pki_base }}/test1/ca"
     t1sub1: "{{ pki_base }}/test1/subca_sub1"
     t1sub2: "{{ pki_base }}/test1/subca_sub2"
     t2ca: "{{ pki_base }}/test2/ca"
     t2sub1: "{{ pki_base }}/test2/subca_sub1"
+    owner: 'pki'
+    group_read: 'pki_read'
 
   tasks:
     - name: Performing backup
       ansible.builtin.systemd:
         name: 'backup-pki.service'
+        state: started
+
+    - name: Performing CRL-Update
+      ansible.builtin.systemd:
+        name: 'pki-crl-updater.service'
         state: started
 
     - name: Checking certificate existence
@@ -60,6 +67,12 @@
         - "{{ t2ca }}/private/ca.key"
         - "{{ t2sub1 }}/ca.crt"
         - "{{ t2sub1 }}/private/ca.key"
+        # single
+        - "{{ t1sub1 }}/issued/server_single.crt"
+        - "{{ t1sub1 }}/issued/server_single.chain.crt"
+        - "{{ t1sub1 }}/private/server_single.key"
+        - "{{ t1sub1 }}/private/server_single.p12"
+        - "{{ t1sub1 }}/private/server_single.unencrypted.key"
 
     - name: Checking certificate absence
       ansible.builtin.stat:
@@ -74,8 +87,8 @@
         - "{{ t1sub1 }}/private/server_test2.unencrypted.key"
         # sub-ca 2
         - "{{ t1sub2 }}/private/server_random1.unencrypted.key"
-        # - "{{ t1sub2 }}/issued/serverClient_random2.chain.crt"  # todo: not working
-        # - "{{ t1sub2 }}/private/serverClient_random2.p12"  # todo: not working
+        - "{{ t1sub2 }}/issued/serverClient_random2.chain.crt"
+        - "{{ t1sub2 }}/private/serverClient_random2.p12"
 
     - name: Checking certificate content
       ansible.builtin.shell: |
@@ -106,8 +119,8 @@
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CRL Distribution Points'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub1.crl'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub1.crt'}
-        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'Subject: CN = AnsibleGuy Website'}  # todo: cn not working with using 'nopass=false'
-        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'DNS:www.ansibleguy.net, DNS:ansibleguy.net, IP:135.181.170.217, URI:https://www.ansibleguy.net'}
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'Subject: CN = AnsibleGuy Website'}
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'DNS:www.ansibleguy.net, DNS:ansibleguy.net, IP Address:135.181.170.217, URI:https://www.ansibleguy.net'}
         ## sub-ca 2
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub2.crl'}
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub2.crt'}
@@ -115,5 +128,120 @@
         - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt", find: 'Subject: CN = ServerClientTest'}
         - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt", find: 'TLS Web Server Authentication, TLS Web Client Authentication'}
 
-        # instance 2
+        # single
+        - {file: "{{ t1sub1 }}/issued/server_single.crt", find: 'DNS:single.test, IP Address:192.168.0.1'}
+        - {file: "{{ t1sub1 }}/issued/server_single.crt", find: 'Subject: CN = Single Certificate'}
 
+    - name: Checking file/directory permissions (chmod)
+      ansible.builtin.shell: |
+        set -o pipefail
+        ls -l {{ item.path }} | cut -d ' ' -f1
+      changed_when: false
+      args:
+        executable: '/bin/bash'
+      register: test_chmod
+      failed_when: test_chmod.stdout_lines != item.expect
+      with_items:
+        - {path: "{{ t1sub1 }}", expect: [
+          'total',
+          '-rw-r-----', 
+          '-rw-r-----',
+          'drwxr-x---',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-------',
+          '-rw-------',
+          '-rw-------',
+          '-rw-------',
+          'drwxr-x---',
+          'drwxr-x---',
+          '-rw-r-----',
+          'drwxr-x---',
+          'drwxr-x---',
+          'drwxr-x---',
+          '-rw-------',
+          '-rw-r-----',
+          '-rw-r-----',
+          'drwxr-x---',
+        ]}
+        - {path: "{{ t1sub1 }}/issued", expect: [
+          'total',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+        ]}
+        - {path: "{{ t1sub1 }}/private", expect: [
+          'total',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+        ]}
+
+    - name: Checking file/directory ownership (chown)
+      ansible.builtin.shell: |
+        set -o pipefail
+        ls -l {{ item.path }} | cut -d ' ' -f{{ item.fields }}
+      changed_when: false
+      args:
+        executable: '/bin/bash'
+      register: test_chown
+      failed_when: test_chown.stdout_lines != item.expect
+      with_items:
+        - {path: "{{ t1sub1 }}", fields: '3-5', expect: [
+          '',
+          "{{ owner }}  {{ group_read }}",
+          "{{ owner }}  {{ group_read }}",
+          "{{ owner }}  {{ group_read }}",
+          "{{ owner }}  {{ group_read }}",
+          "{{ owner }}  {{ group_read }}",
+          "root root ",
+          "root root ",
+          "root root ",
+          "root root ",
+          "{{ owner }}  {{ owner }}",
+          "{{ owner }}  {{ group_read }}",
+          "{{ owner }}  {{ owner }}",
+          "{{ owner }}  {{ owner }}",
+          "{{ owner }}  {{ owner }}",
+          "{{ owner }}  {{ owner }}",
+          "root root ",
+          "{{ owner }}  {{ owner }}",
+          "{{ owner }}  {{ owner }}",
+          "{{ owner }}  {{ owner }}",
+        ]}
+        - {path: "{{ t1sub1 }}/private", fields: '3-4', expect: [
+          '',
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+        ]}
+        - {path: "{{ t1sub1 }}/issued", fields: '3-4', expect: [
+          '',
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+        ]}
