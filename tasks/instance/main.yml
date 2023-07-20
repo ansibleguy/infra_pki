@@ -45,13 +45,11 @@
   vars:
     pki_crl_distribution: "{{ PKI.crl_distribution | combine(pki_cnf.crl_distribution) }}"
     pki_crl_prefix: 'ca'
-    pki_extensions: "{{ PKI.extensions |
-    combine(pki_cnf.extensions, recursive=true) }}"
+    pki_extensions: "{{ PKI.extensions | combine(pki_cnf.extensions, recursive=true) }}"
 
 - name: "{{ task_prefix_pki }} | Processing SubCA's"
   ansible.builtin.include_tasks: instance/subca.yml
   when: >
-    pki_init.stat.exists and
     (only_ca is undefined or
     only_ca == pki_name_subca)
   vars:

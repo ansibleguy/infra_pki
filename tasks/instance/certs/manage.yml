@@ -36,7 +36,7 @@
   changed_when: "'CHANGED' in pki_cert_result.stdout"
   ignore_errors: true
   vars:
-    pki_cert_export: "{{ pki_cert_cnf.export | combine(pki_cnf_subca.export) | combine(defaults_cert.export) }}"
+    pki_cert_export: "{{ defaults_cert.export | combine(pki_cnf_subca.export) | combine(pki_cert_cnf.export) }}"
     pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cnf_subca.pwd_cert) | default('') }}"
     pki_cert_file: "{{ pki_cert_type }}_{{ pki_cert_name }}"
 

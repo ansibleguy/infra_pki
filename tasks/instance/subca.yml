@@ -39,7 +39,6 @@
 
 - name: "{{ task_prefix_subca }} | Processing certificates"
   ansible.builtin.include_tasks: instance/certs/main.yml
-  when: pki_subca_init.stat.exists
   tags: [certs, certs_renew, certs_create, certs_revoke]
   args:
     apply:
