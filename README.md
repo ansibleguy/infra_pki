@@ -154,6 +154,8 @@ To debug errors - you can set the 'debug' variable at runtime:
 ansible-playbook -K -D -i inventory/hosts.yml playbook.yml -e debug=yes
 ```
 
+Note: `--check` mode is not supported by this role as it heavily depends on scripted command-tasks.
+
 ----
 
 ## Info
