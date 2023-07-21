@@ -151,18 +151,18 @@ root@test-ag-infrapki-1:/# ls -l /var/local/lib/pki/test_pki/subca_internal/
 > drwxr-x--- 2 pki  pki_read  4096 Jul 21 08:35 certs_by_serial
 > -rw-r----- 1 pki  pki_read   524 Jul 21 08:35 crl.pem
 > -rw-r----- 1 pki  pki_read 18092 Jul 21 08:27 gpl-2.0.txt
-> -rw------- 1 root root       598 Jul 21 08:35 index.txt
-> -rw------- 1 root root        20 Jul 21 08:35 index.txt.attr
-> -rw------- 1 root root        20 Jul 21 08:35 index.txt.attr.old
-> -rw------- 1 root root       517 Jul 21 08:35 index.txt.old
+> -rw-r----- 1 pki  pki        598 Jul 21 08:35 index.txt
+> -rw-r----- 1 pki  pki         20 Jul 21 08:35 index.txt.attr
+> -rw-r----- 1 pki  pki         20 Jul 21 08:35 index.txt.attr.old
+> -rw-r----- 1 pki  pki        517 Jul 21 08:35 index.txt.old
 > drwxr-x--- 2 pki  pki       4096 Jul 21 08:28 inline
 > drwxr-x--- 2 pki  pki_read  4096 Jul 21 08:35 issued
 > -rw-r----- 1 pki  pki       5043 Jul 21 08:27 openssl-easyrsa.cnf
 > drwxr-x--- 2 pki  pki       4096 Jul 21 08:35 private
 > drwxr-x--- 2 pki  pki       4096 Jul 21 08:35 reqs
 > drwxr-x--- 5 pki  pki       4096 Jul 21 08:28 revoked
-> -rw------- 1 root root        33 Jul 21 08:35 serial
-> -rw------- 1 root root        33 Jul 21 08:35 serial.old
+> -rw-r----- 1 pki  pki         33 Jul 21 08:35 serial
+> -rw-r----- 1 pki  pki         33 Jul 21 08:35 serial.old
 > -rw-r----- 1 pki  pki        764 Jul 21 08:28 vars
 > drwxr-x--- 2 pki  pki       4096 Jul 21 08:28 x509-types
 
