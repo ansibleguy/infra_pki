@@ -185,7 +185,7 @@ ansible-playbook -K -D -i inventory/hosts.yml playbook.yml -e debug=yes
 * **Warning:** For gained security against CA-compromise you should:
 
   1. Make sure all your needed Sub-CA's are created by the role
-  2. Copy the CA private-key (_${path_base}/ca/pki/private/ca.key_) to an offline medium (_keep redundancy in mind_)
+  2. Copy the CA private-key (_${path_base}/ca/private/ca.key_) to an offline medium (_keep redundancy in mind_)
   3. Save the password you used to initialize the CA (_not on the same medium_)
   4. Remove the ca.key file from your Online-system using a 'secure-deletion' tool like 'shred':
   
