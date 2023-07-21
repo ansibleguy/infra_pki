@@ -77,6 +77,11 @@
   register: pki_ca_result
   ignore_errors: true
 
+- name: "{{ task_prefix_pki }} | Init-CA | Debug info"
+  ansible.builtin.debug:
+    var: pki_ca_result.stdout_lines
+  when: debug | bool
+
 - name: "{{ task_prefix_pki }} | Init-CA | Show pretty error"
   ansible.builtin.fail:
     msg: "It seems the CA creation failed. Please analyze the output to resolve the issue!

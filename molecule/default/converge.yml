@@ -204,3 +204,12 @@
         pki_cert_action: 'renew'
         pki_subca_pwd: 'none'
       tags: [molecule-idempotence-notest]
+
+    - name: PKI | Creating single certificate (with debug)
+      ansible.builtin.import_role:
+        name: ansibleguy.infra_pki
+        tasks_from: single_cert.yml
+      vars:
+        pki_cert_action: 'create'
+        pki_subca_pwd: 'none'
+        debug: true

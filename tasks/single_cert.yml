@@ -61,3 +61,14 @@
   ansible.builtin.import_tasks: instance/certs/manage.yml
   vars:
     task_prefix_certs: "{{ task_prefix_cert }}"
+
+- name: "{{ task_prefix_cert }} | Updating privileges"
+  ansible.builtin.include_tasks: instance/update_privileges.yml
+  vars:
+    easyrsa_base: "{{ pki_path_subca }}"
+    privilege_task_prefix: "{{ task_prefix_cert }}"
+  when: pki_cert_result.changed
+  tags: always
+  args:
+    apply:
+      tags: always

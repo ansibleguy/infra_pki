@@ -3,4 +3,10 @@
 - name: "{{ privilege_task_prefix }} | Updating privileges"
   ansible.builtin.command: "{{ PKI_HC.path.script }}/pki_privileges.sh
   '{{ easyrsa_base }}' '{{ pki_cnf.owner }}' '{{ pki_cnf.group_read }}' '{{ pki_cnf.group }}'"
+  register: pki_priv_result
   changed_when: false
+
+- name: "{{ privilege_task_prefix }} | Debug info"
+  ansible.builtin.debug:
+    var: pki_priv_result.stdout_lines
+  when: debug | bool

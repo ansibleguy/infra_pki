@@ -156,6 +156,10 @@ function export_as_p() {
   fi
 }
 
+function print_path() {
+  echo " > $1"
+}
+
 if [[ "$CERT_ACTION" == 'revoke' ]] || [[ "$CERT_ACTION" == 'renew' ]]
 then
   if [ -f "${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.crt" ]
@@ -227,6 +231,7 @@ then
       path="${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.${ext}"
       if [ -f "$path" ]
       then
+        print_path "$path"
         chown "$PKI_OWNER":"$PKI_GROUP_PRIVATE" "$path"
         chmod "$MODE_PRIVATE" "$path"
       fi
@@ -236,6 +241,7 @@ then
       path="${PKI_PATH_PUBLIC}/${CERT_FILE_NAME}.${ext}"
       if [ -f "$path" ]
       then
+        print_path "$path"
         chown "$PKI_OWNER":"$PKI_GROUP_PUBLIC" "$path"
         chmod "$MODE_PUBLIC" "$path"
       fi

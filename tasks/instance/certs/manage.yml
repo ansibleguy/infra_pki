@@ -4,6 +4,8 @@
   ansible.builtin.debug:
     msg: "Running command: \"{{ PKI_HC.path.script }}/pki_cert.sh
     '{{ pki_path_subca }}' '{{ pki_cert_action }}' '{{ pki_cert_type }}' '{{ pki_cert_file }}'\""
+  vars:
+    pki_cert_file: "{{ pki_cert_type }}_{{ pki_cert_name }}"
   when: debug | bool
 
 - name: "{{ task_prefix_cert }} | '{{ pki_cert_name }}' | Checking certificate config"
