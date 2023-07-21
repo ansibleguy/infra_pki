@@ -264,7 +264,7 @@
         - {path: "{{ t2sub1 }}/private", fields: '3-4', expect: [
           "{{ owner2 }} {{ owner2 }}",
         ]}
-        - { path: "{{ t2base }}", fields: '3-4', expect: [
+        - {path: "{{ t2base }}", fields: '3-4', expect: [
           "{{ owner2 }} {{ group_read2 }}",
           "{{ owner2 }} {{ group_read2 }}",
-        ] }
+        ]}
