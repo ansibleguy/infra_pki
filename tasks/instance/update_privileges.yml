@@ -2,5 +2,5 @@
 
 - name: "{{ privilege_task_prefix }} | Updating privileges"
   ansible.builtin.command: "{{ PKI_HC.path.script }}/pki_privileges.sh
-  '{{ easyrsa_base }}' '{{ pki_cnf.owner }}' '{{ pki_cnf.group_read }}' '{{ pki_cnf.owner }}'"
+  '{{ easyrsa_base }}' '{{ pki_cnf.owner }}' '{{ pki_cnf.group_read }}' '{{ pki_cnf.group }}'"
   changed_when: false

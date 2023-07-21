@@ -14,6 +14,7 @@ Type=simple
 User=root
 Group=root
 ExecStart=/bin/bash -c 'tar cJf \"{{ PKI.backup.path }}/$$(date +\'%%Y-%%m-%%d_%%H-%%M-%%S\').tar.xz\"{% for path in PKI.instances | unique_bases(defaults_instance.path_base) %} {{ path }}{% endfor %}'
+ExecStop=/bin/bash -c 'chmod 600 {{ PKI.backup.path }}/*.tar.xz'
 {% if ansible_distribution_version == '10' %}
 StandardOutput=syslog
 StandardError=syslog

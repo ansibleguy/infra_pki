@@ -6,4 +6,6 @@
       - check_vars.key_size | string in PKI_HC.options.key_size
       - check_vars.algo in PKI_HC.options.algo
       - check_vars.digest in PKI_HC.options.digest
+      - check_vars.dn in PKI_HC.options.dn
+      - check_vars.req_country | default('', true) | length < 3
   tags: always

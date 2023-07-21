@@ -11,7 +11,12 @@ set_var EASYRSA_SSL_CONF "$EASYRSA_PKI/openssl-easyrsa.cnf"
 # variables
 
 {% for var, value in easyrsa_vars.items() %}
-{%   if var not in PKI_HC.easyrsa.vars_ignore and value | default(none, true) is not none %}
+{%   if var not in PKI_HC.easyrsa.vars_ignore and (value | default(none, true) is not none or var in PKI_HC.easyrsa.vars_empty_ok) %}
+{%     if value | is_var_string and ' ' in value %}
+{# NOTE: easyrsa will not remove quotes for some values like 'algo' which results in "Invalid command '"ec"'" #}
+set_var EASYRSA_{{ var | upper }} "{{ value }}"
+{%     else %}
 set_var EASYRSA_{{ var | upper }} {{ value }}
+{%     endif %}
 {%   endif %}
 {% endfor %}

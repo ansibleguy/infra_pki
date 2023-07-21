@@ -12,6 +12,13 @@
       crl_distribution:
         domain: 'crl.ansibleguy.net'
 
+      vars:
+        req_country: 'AT'
+        req_province: 'Styria'
+        req_org: 'AnsibleGuy'
+        req_email: 'pki@ansibleguy.net'
+        ca_expire: 9125  # 25 years
+
       backup:
         enable: true
 
@@ -20,8 +27,8 @@
           ca_cn: 'TestRootCA'
           pwd_ca: 'tesT12345'
           vars:
-            req_org: 'test.org'
-            req_ou: 'test.ou'
+            req_org: 'Ultra Company'
+            req_ou: 'IT'
             algo: 'ec'
             curve: 'secp384r1'
 
@@ -31,7 +38,8 @@
               pwd_ca: 'tEst54321'
               pwd_cert: 'teSt32521'
               vars:
-                req_org: 'test1org'
+                req_org: 'Internal Org'
+                req_city: 'Graz'
 
               certs:
                 server:
@@ -59,6 +67,9 @@
                     cn: 'AnsibleGuy Mail'
                     san:
                       email: 'guy@ansibleguy.net'
+                    req:
+                      org: 'AnsibleGuy Mailing'
+                      email: 'random@ansibleguy.net'
 
             sub2:
               pwd_ca: 'tEst543212'
@@ -67,7 +78,7 @@
                 req_org: 'test2org'
                 req_ou: 'test2ou'
                 req_email: 'test2email@test.intern'
-                req_country: 'test2country'
+                req_country: 'DE'
                 req_province: 'test2province'
               export:
                 unencrypted: true
@@ -96,11 +107,15 @@
 
         test2:
           pwd_ca: 'tesT12345'
+          owner: 'pki2'
+          group: 'pki2'
+          group_read: 'pki_read2'
           vars:
             req_org: 'test.org'
             req_ou: 'test.ou'
             algo: 'rsa'
             key_size: 8192
+            dn: 'cn_only'
 
           sub_cas:
             sub1:

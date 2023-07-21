@@ -51,8 +51,8 @@ defaults_vars:  # > pki_vars & > pki_vars_subca
   #   easyrsa-defaults will be used instead
   req_country: 'AT'
   req_province: 'Styria'
-  req_city: ''
-  req_org: 'AnsibleGuy'
+  req_city: ''  # also: location
+  req_org: ''
   req_email: ''
   req_ou: ''
 
@@ -66,7 +66,7 @@ defaults_vars:  # > pki_vars & > pki_vars_subca
   crl_days: 180
   cert_renew: 90
 
-  dn: 'cn_only'  # cn_only, org
+  dn: 'org'  # cn_only, org; org => "traditional" Country/Province/City/Org/OU/email/CN format
   rand_sn: 'yes'
   fix_offset:  # 1-365
   ns_support: 'no'
@@ -105,3 +105,10 @@ defaults_cert:
   # pkcs8:
   # pkcs12:
   cn: "Certificate-{{ ansible_date_time.date }}-{{ ansible_date_time.time }}"
+  req:
+    country:
+    province:
+    city:  # also: location
+    org:
+    email:
+    ou:

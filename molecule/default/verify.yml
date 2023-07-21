@@ -5,13 +5,17 @@
   gather_facts: false
   vars:
     pki_base: '/var/local/lib/pki'
-    t1ca: "{{ pki_base }}/test1/ca"
-    t1sub1: "{{ pki_base }}/test1/subca_sub1"
-    t1sub2: "{{ pki_base }}/test1/subca_sub2"
-    t2ca: "{{ pki_base }}/test2/ca"
-    t2sub1: "{{ pki_base }}/test2/subca_sub1"
+    t1base: "{{ pki_base }}/test1"
+    t1ca: "{{ t1base }}/ca"
+    t1sub1: "{{ t1base }}/subca_sub1"
+    t1sub2: "{{ t1base }}/subca_sub2"
+    t2base: "{{ pki_base }}/test2"
+    t2ca: "{{ t2base }}/ca"
+    t2sub1: "{{ t2base }}/subca_sub1"
     owner: 'pki'
+    owner2: 'pki2'
     group_read: 'pki_read'
+    group_read2: 'pki_read2'
 
   tasks:
     - name: Performing backup
@@ -105,7 +109,7 @@
         - {file: "{{ t1ca }}/ca.crt", find: 'URI:http://crl.ansibleguy.net/ca.crl'}
         - {file: "{{ t1ca }}/ca.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/ca.crt'}
         - {file: "{{ t1ca }}/ca.crt", find: 'CA:TRUE'}
-        - {file: "{{ t1ca }}/ca.crt", find: 'Subject: CN = TestRootCA'}
+        - {file: "{{ t1ca }}/ca.crt", find: 'Subject: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = TestRootCA, emailAddress = pki@ansibleguy.net'}
         ## sub-ca 1
         - {file: "{{ t1sub1 }}/ca.crt", find: 'Signature Algorithm: ecdsa-with-SHA256'}
         - {file: "{{ t1sub1 }}/ca.crt", find: 'ASN1 OID: secp384r1'}
@@ -113,25 +117,32 @@
         - {file: "{{ t1sub1 }}/ca.crt", find: 'URI:http://crl.ansibleguy.net/ca.crl'}
         - {file: "{{ t1sub1 }}/ca.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/ca.crt'}
         - {file: "{{ t1sub1 }}/ca.crt", find: 'CA:TRUE'}
-        - {file: "{{ t1sub1 }}/ca.crt", find: 'Subject: CN = TestSubCA'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'Issuer: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = TestRootCA, emailAddress = pki@ansibleguy.net'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = TestSubCA1, emailAddress = pki@ansibleguy.net'}
+        - {file: "{{ t1sub1 }}/ca.crt", find: 'DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=TestRootCA/emailAddress=pki@ansibleguy.net'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'Signature Algorithm: ecdsa-with-SHA256'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'ASN1 OID: secp384r1'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CRL Distribution Points'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub1.crl'}
         - {file: "{{ t1sub1 }}/issued/server_test2.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub1.crt'}
-        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt", find: 'Subject: CN = AnsibleGuy Website'}
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt",
+           find: 'Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Website, emailAddress = pki@ansibleguy.net'}
+        - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt",
+           find: 'Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = TestSubCA1, emailAddress = pki@ansibleguy.net'}
         - {file: "{{ t1sub1 }}/issued/server_ansibleguynet.crt",
            find: 'DNS:www.ansibleguy.net, DNS:ansibleguy.net, IP Address:135.181.170.217, URI:https://www.ansibleguy.net'}
         ## sub-ca 2
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'URI:http://crl.ansibleguy.net/subca_sub2.crl'}
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'CA Issuers - URI:http://crl.ansibleguy.net/subca_sub2.crt'}
         - {file: "{{ t1sub2 }}/issued/server_random1.crt", find: 'DNS:random.ansible.net'}
-        - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt", find: 'Subject: CN = ServerClientTest'}
+        - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt",
+           find: 'Subject: C = DE, ST = test2province, O = test2org, OU = test2ou, CN = ServerClientTest, emailAddress = test2email@test.intern'}
         - {file: "{{ t1sub2 }}/issued/serverClient_random2.crt", find: 'TLS Web Server Authentication, TLS Web Client Authentication'}
 
         # single
         - {file: "{{ t1sub1 }}/issued/server_single.crt", find: 'DNS:single.test, IP Address:192.168.0.1'}
-        - {file: "{{ t1sub1 }}/issued/server_single.crt", find: 'Subject: CN = Single Certificate'}
+        - {file: "{{ t1sub1 }}/issued/server_single.crt",
+           find: 'Subject: C = AT, ST = Styria, L = Graz, O = test1org, CN = Single Certificate, emailAddress = pki@ansibleguy.net'}
 
     - name: Checking file/directory permissions (chmod)
       ansible.builtin.shell: |
@@ -141,32 +152,33 @@
       args:
         executable: '/bin/bash'
       register: test_chmod
-      failed_when: test_chmod.stdout_lines != item.expect
+      failed_when: test_chmod.stdout_lines[1:] != item.expect
       with_items:
         - {path: "{{ t1sub1 }}", expect: [
-          'total',
           '-rw-r-----',
           '-rw-r-----',
           'drwxr-x---',
           '-rw-r-----',
           '-rw-r-----',
-          '-rw-------',
-          '-rw-------',
-          '-rw-------',
-          '-rw-------',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
           'drwxr-x---',
           'drwxr-x---',
           '-rw-r-----',
           'drwxr-x---',
           'drwxr-x---',
           'drwxr-x---',
-          '-rw-------',
+          '-rw-r-----',
           '-rw-r-----',
           '-rw-r-----',
           'drwxr-x---',
         ]}
         - {path: "{{ t1sub1 }}/issued", expect: [
-          'total',
+          '-rw-r-----',
+          '-rw-r-----',
+          '-rw-r-----',
           '-rw-r-----',
           '-rw-r-----',
           '-rw-r-----',
@@ -176,7 +188,8 @@
           '-rw-r-----',
         ]}
         - {path: "{{ t1sub1 }}/private", expect: [
-          'total',
+          '-rw-r-----',
+          '-rw-r-----',
           '-rw-r-----',
           '-rw-r-----',
           '-rw-r-----',
@@ -198,32 +211,32 @@
       args:
         executable: '/bin/bash'
       register: test_chown
-      failed_when: test_chown.stdout_lines != item.expect
+      failed_when: test_chown.stdout_lines[1:] != item.expect
       with_items:
-        - {path: "{{ t1sub1 }}", fields: '3-5', expect: [
-        '',
-          "{{ owner }}  {{ group_read }}",
-          "{{ owner }}  {{ group_read }}",
-          "{{ owner }}  {{ group_read }}",
-          "{{ owner }}  {{ group_read }}",
-          "{{ owner }}  {{ group_read }}",
-          "root root ",
-          "root root ",
-          "root root ",
-          "root root ",
-          "{{ owner }}  {{ owner }}",
-          "{{ owner }}  {{ group_read }}",
-          "{{ owner }}  {{ owner }}",
-          "{{ owner }}  {{ owner }}",
-          "{{ owner }}  {{ owner }}",
-          "{{ owner }}  {{ owner }}",
-          "root root ",
-          "{{ owner }}  {{ owner }}",
-          "{{ owner }}  {{ owner }}",
-          "{{ owner }}  {{ owner }}",
+        - {path: "{{ t1sub1 }}", fields: '3-4', expect: [
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
         ]}
         - {path: "{{ t1sub1 }}/private", fields: '3-4', expect: [
-        '',
+          "{{ owner }} {{ owner }}",
+          "{{ owner }} {{ owner }}",
           "{{ owner }} {{ owner }}",
           "{{ owner }} {{ owner }}",
           "{{ owner }} {{ owner }}",
@@ -237,7 +250,9 @@
           "{{ owner }} {{ owner }}",
         ]}
         - {path: "{{ t1sub1 }}/issued", fields: '3-4', expect: [
-        '',
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
+          "{{ owner }} {{ group_read }}",
           "{{ owner }} {{ group_read }}",
           "{{ owner }} {{ group_read }}",
           "{{ owner }} {{ group_read }}",
@@ -246,3 +261,10 @@
           "{{ owner }} {{ group_read }}",
           "{{ owner }} {{ group_read }}",
         ]}
+        - {path: "{{ t2sub1 }}/private", fields: '3-4', expect: [
+          "{{ owner2 }} {{ owner2 }}",
+        ]}
+        - { path: "{{ t2base }}", fields: '3-4', expect: [
+          "{{ owner2 }} {{ group_read2 }}",
+          "{{ owner2 }} {{ group_read2 }}",
+        ] }

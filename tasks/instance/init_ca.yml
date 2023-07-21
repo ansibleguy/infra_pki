@@ -32,7 +32,7 @@
     remote_src: true
     dest: "{{ pki_path_ca }}/"
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group }}"
     mode: "{{ PKI_HC.mode.file }}"
     directory_mode: "{{ PKI_HC.mode.dir }}"
 
@@ -42,7 +42,7 @@
     dest: "{{ pki_path_ca }}/vars"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group }}"
   vars:
     easyrsa_vars: "{{ pki_vars }}"
     easyrsa_base: "{{ pki_path_ca }}"
@@ -53,12 +53,11 @@
     dest: "{{ pki_path_ca }}/x509-types/COMMON"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group }}"
   vars:
     pki_crl_distribution: "{{ PKI.crl_distribution | combine(pki_cnf.crl_distribution) }}"
     pki_crl_prefix: 'ca'
-    pki_extensions: "{{ PKI.extensions |
-    combine(pki_cnf.extensions, recursive=true) }}"
+    pki_extensions: "{{ PKI.extensions | combine(pki_cnf.extensions, recursive=true) }}"
 
 - name: "{{ task_prefix_pki }} | Init-CA | Initializing"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }} init-pki soft"
@@ -75,6 +74,14 @@
     EASYRSA_PASSIN: "pass:{{ pki_ca_pwd }}"
     EASYRSA_PASSOUT: "pass:{{ pki_ca_pwd }}"
   no_log: true
+  register: pki_ca_result
+  ignore_errors: true
+
+- name: "{{ task_prefix_pki }} | Init-CA | Show pretty error"
+  ansible.builtin.fail:
+    msg: "It seems the CA creation failed. Please analyze the output to resolve the issue!
+    STDERR: '{{ pki_ca_result.stderr_lines | default(pki_ca_result.msg) }}'"
+  when: pki_ca_result.failed
 
 - name: "{{ task_prefix_pki }} | Init-CA | Saving password"
   ansible.builtin.copy:

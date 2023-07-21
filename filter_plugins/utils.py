@@ -15,6 +15,7 @@ class FilterModule(object):
             "is_dict": self.is_dict,
             "unique_bases": self.unique_bases,
             "san_cs_dict": self.san_cs_dict,
+            "is_var_string": self.is_var_string,
         }
 
     @staticmethod
@@ -58,11 +59,15 @@ class FilterModule(object):
             for ansible_key, openssl_key in san_mapping.items():
                 if ansible_key in cert['san']:
                     for entry in cls.ensure_list(cert['san'][ansible_key]):
-                        san.append(f'{openssl_key}:{entry}')
+                        openssl_key_value = f'{openssl_key}:{entry}'
+                        if openssl_key_value not in san:
+                            san.append(openssl_key_value)
 
-                if openssl_key in cert['san']:
+                if openssl_key != ansible_key and openssl_key in cert['san']:
                     for entry in cls.ensure_list(cert['san'][openssl_key]):
-                        san.append(f'{openssl_key}:{entry}')
+                        openssl_key_value = f'{openssl_key}:{entry}'
+                        if openssl_key_value not in san:
+                            san.append(openssl_key_value)
 
         if len(san) == 0:
             return ''
@@ -97,3 +102,11 @@ class FilterModule(object):
             san[key].append(value)
 
         return san
+
+    @staticmethod
+    def is_var_string(data: (str, int, None)) -> bool:
+        if isinstance(data, str):
+            if data not in ['yes', 'no']:
+                return True
+
+        return False

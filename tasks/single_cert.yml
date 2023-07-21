@@ -12,6 +12,9 @@
   ansible.builtin.set_fact:
     pki_path_subca: "{{ pki_cnf.path_base }}/{{ pki_name }}/{{ PKI_HC.dir.prefix_subca }}{{ pki_name_subca }}"
     pki_cert_name: "{{ pki_cert_name | safe_key }}"
+    pki_vars_subca: "{{ defaults_vars |
+    combine(PKI.vars, recursive=true) |
+    combine(pki_cnf_subca.vars, recursive=true) }}"
 
 - name: PKI | Single Cert | Setting vars (3/3)
   ansible.builtin.set_fact:

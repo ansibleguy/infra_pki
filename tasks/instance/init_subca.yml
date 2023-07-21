@@ -28,7 +28,7 @@
     remote_src: true
     dest: "{{ pki_path_subca }}/"
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group }}"
     mode: "{{ PKI_HC.mode.file }}"
     directory_mode: "{{ PKI_HC.mode.dir }}"
 
@@ -38,7 +38,7 @@
     dest: "{{ pki_path_subca }}/vars"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group }}"
   vars:
     easyrsa_vars: "{{ pki_vars_subca }}"
     easyrsa_base: "{{ pki_path_subca }}"
@@ -58,6 +58,14 @@
     EASYRSA_PASSIN: "pass:{{ pki_subca_pwd }}"
     EASYRSA_PASSOUT: "pass:{{ pki_subca_pwd }}"
   no_log: true
+  ignore_errors: true
+  register: pki_subca_result
+
+- name: "{{ task_prefix_pki }} | Init-CA | Show pretty error"
+  ansible.builtin.fail:
+    msg: "It seems the Sub-CA creation failed. Please analyze the output to resolve the issue!
+    STDERR: '{{ pki_subca_result.stderr_lines | default(pki_subca_result.msg) }}'"
+  when: pki_subca_result.failed
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Importing SubCA request into CA"
   ansible.builtin.command: "{{ PKI_SCRIPT }} {{ pki_vars_param }}
@@ -76,7 +84,6 @@
   environment:
     EASYRSA_PKI: "{{ pki_path_ca }}"
     EASYRSA_PASSIN: "pass:{{ pki_ca_pwd }}"
-    EASYRSA_REQ_CN: "{{ pki_cnf_subca.ca_cn }}"
   args:
     creates: "{{ pki_path_ca }}/issued/subca_{{ pki_name_subca }}.crt"
   no_log: true

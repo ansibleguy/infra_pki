@@ -6,6 +6,9 @@ PKI_HC:
       template: '/var/local/lib/easyrsa_template'  # version number = sub-directory
     dl: 'https://github.com/OpenVPN/easy-rsa/releases/download'
     vars_ignore: ['temp_dir', 'ext_dir', 'no_pass', 'ssl_conf', 'batch', 'pki']
+    vars_empty_ok: [  # will use fallback-value is not set to empty string
+      'req_country', 'req_province', 'req_city', 'req_org', 'req_email', 'req_ou'
+    ]
     pwd_min_length: 8
     privileges:
       public:
@@ -46,6 +49,7 @@ PKI_HC:
     key_size: ['1024', '2048', '4096', '8192']
     algo: ['rsa', 'ec', 'ed']
     digest: ['md5', 'sha1', 'sha256', 'sha224', 'sha384', 'sha512']
+    dn: ['org', 'cn_only']
 
   san_mapping: {'dns': 'DNS', 'ip': 'IP', 'uri': 'URI', 'email': 'email', 'other': 'otherName', 'dir': 'dirName'}
   cert:

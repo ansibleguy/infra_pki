@@ -6,10 +6,11 @@
     '{{ pki_path_subca }}' '{{ pki_cert_action }}' '{{ pki_cert_type }}' '{{ pki_cert_file }}'\""
   when: debug | bool
 
-- name: "{{ task_prefix_cert }} | '{{ pki_cert_name }}' | Checking that password meets the requirements"
+- name: "{{ task_prefix_cert }} | '{{ pki_cert_name }}' | Checking certificate config"
   ansible.builtin.assert:
     that:
       - pki_cert_pwd | meets_password_complexity(PKI_HC)
+      - pki_cert_cnf.req.country | default('', true) | length < 3
   vars:
     pki_cert_pwd: "{{ pki_cert_cnf.pwd | default(pki_cnf_subca.pwd_cert) | default('') }}"
   tags: always
@@ -20,7 +21,7 @@
   environment:
     PKI_CERT_CN: "{{ pki_cert_cnf.cn }}"
     PKI_OWNER: "{{ pki_cnf.owner }}"
-    PKI_GROUP_PRIVATE: "{{ pki_cnf.owner }}"
+    PKI_GROUP_PRIVATE: "{{ pki_cnf.group }}"
     PKI_GROUP_PUBLIC: "{{ pki_cnf.group_read }}"
     PKI_CERT_SAN: "{{ pki_cert_cnf | build_san(PKI_HC.san_mapping) }}"
     PKI_PWD_CA: "{{ pki_subca_pwd | default('') }}"
@@ -31,6 +32,12 @@
     {% endif %}\
     {% endfor %}\
     {% if not pki_cert_export.values() is any %}-{% endif %}"
+    PKI_REQ_COUNTRY: "{{ pki_cert_cnf.req.country | default(pki_vars_subca.req_country) }}"
+    PKI_REQ_PROVINCE: "{{ pki_cert_cnf.req.province | default(pki_vars_subca.req_province) }}"
+    PKI_REQ_CITY: "{{ pki_cert_cnf.req.city | default(pki_vars_subca.req_city) }}"
+    PKI_REQ_ORG: "{{ pki_cert_cnf.req.org | default(pki_vars_subca.req_org) }}"
+    PKI_REQ_EMAIL: "{{ pki_cert_cnf.req.email | default(pki_vars_subca.req_email) }}"
+    PKI_REQ_OU: "{{ pki_cert_cnf.req.ou | default(pki_vars_subca.req_ou) }}"
   no_log: true  # passwords
   register: pki_cert_result
   changed_when: "'CHANGED' in pki_cert_result.stdout"

@@ -40,6 +40,12 @@
     - pki_backup_disable.failed
     - "'does not exist' not in pki_backup_disable.msg"
 
+- name: PKI | Service | Backup | Installing requirements
+  ansible.builtin.package:
+    name: 'xz-utils'
+    state: present
+  when: PKI.backup.enable | bool
+
 - name: PKI | Service | CRL-Updater | Adding service & timer
   ansible.builtin.template:
     src: "templates/etc/systemd/system/pki-crl-updater.{{ item }}.j2"

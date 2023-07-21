@@ -29,7 +29,7 @@
     dest: "{{ pki_path_subca }}/x509-types/COMMON"
     mode: "{{ PKI_HC.mode.file }}"
     owner: "{{ pki_cnf.owner }}"
-    group: "{{ pki_cnf.owner }}"
+    group: "{{ pki_cnf.group }}"
   vars:
     pki_crl_distribution: "{{ PKI.crl_distribution | combine(pki_cnf.crl_distribution) | combine(pki_cnf_subca.crl_distribution) }}"
     pki_crl_prefix: "subca_{{ pki_name_subca }}"

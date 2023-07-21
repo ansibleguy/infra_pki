@@ -1,0 +1,10 @@
+---
+
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Installing troubleshooting tools
+      ansible.builtin.apt:
+        pkg: ['nano', 'less', 'vim']
+        state: present

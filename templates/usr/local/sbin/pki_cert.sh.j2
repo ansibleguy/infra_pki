@@ -40,6 +40,7 @@ else
   PWD_FILE_CERT="${PKI_PATH}/${PWD_FILE_CERT}"
   PKI_PATH_PUBLIC="${PKI_PATH}/issued"
   PKI_PATH_PRIVATE="${PKI_PATH}/private"
+  PKI_VARS="${PKI_PATH}/vars"
 
   if [ -z "$PKI_PWD_CA" ]
   then
@@ -76,6 +77,31 @@ else
       PKI_CERT_EXPORT_AS='p12,chain'
       echo "Info: Environmental-variable 'PKI_CERT_EXPORT_AS' was not provided => using default: '$PKI_CERT_EXPORT_AS'!"
     fi
+    export EASYRSA_REQ_CN="$PKI_CERT_CN"
+    if [ -n "$PKI_REQ_COUNTRY" ]
+    then
+      export EASYRSA_REQ_COUNTRY="$PKI_REQ_COUNTRY"
+    fi
+    if [ -n "$PKI_REQ_PROVINCE" ]
+    then
+      export EASYRSA_REQ_PROVINCE="$PKI_REQ_PROVINCE"
+    fi
+    if [ -n "$PKI_REQ_CITY" ]
+    then
+      export EASYRSA_REQ_CITY="$PKI_REQ_CITY"
+    fi
+    if [ -n "$PKI_REQ_ORG" ]
+    then
+      export EASYRSA_REQ_ORG="$PKI_REQ_ORG"
+    fi
+    if [ -n "$PKI_REQ_EMAIL" ]
+    then
+      export EASYRSA_REQ_EMAIL="$PKI_REQ_EMAIL"
+    fi
+    if [ -n "$PKI_REQ_OU" ]
+    then
+      export EASYRSA_REQ_OU="$PKI_REQ_OU"
+    fi
     # check cert password
     if [ -z "$PKI_PWD_CERT" ]
     then
@@ -103,21 +129,21 @@ function pki_script() {
   PASSOUT="$3"
   if [[ "$DEBUG" == "1" ]]
   then
-    echo "DEBUG: Executing EasyRSA script => \"'EASYRSA_PKI=$PKI_PATH EASYRSA_PASSIN=xxx EASYRSA_PASSOUT=xxx $PKI_SCRIPT --batch --vars=${PKI_PATH}/vars $CMD'\""
+    echo "DEBUG: Executing EasyRSA script => \"'EASYRSA_PKI=$PKI_PATH EASYRSA_PASSIN=xxx EASYRSA_PASSOUT=xxx $PKI_SCRIPT --batch --vars=${PKI_VARS} $CMD'\""
   fi
 
   # shellcheck disable=SC2086
   if [ -z "$PASSIN" ] && [ -z "$PASSOUT" ]
   then
-    EASYRSA_PKI="$PKI_PATH" $PKI_SCRIPT --batch --vars "${PKI_PATH}/vars" $CMD
+    EASYRSA_PKI="$PKI_PATH" $PKI_SCRIPT --batch --vars "${PKI_VARS}" $CMD
   elif [ -z "$PASSIN" ]
   then
-    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSOUT="pass:${PASSOUT}" $PKI_SCRIPT --batch --vars="${PKI_PATH}/vars" $CMD
+    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSOUT="pass:${PASSOUT}" $PKI_SCRIPT --batch --vars="${PKI_VARS}" $CMD
   elif [ -z "$PASSOUT" ]
   then
-    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSIN="pass:${PASSIN}" $PKI_SCRIPT --batch --vars="${PKI_PATH}/vars" $CMD
+    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSIN="pass:${PASSIN}" $PKI_SCRIPT --batch --vars="${PKI_VARS}" $CMD
   else
-    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSIN="pass:${PASSIN}" EASYRSA_PASSOUT="pass:${PASSOUT}" $PKI_SCRIPT --batch --vars="${PKI_PATH}/vars" $CMD
+    EASYRSA_PKI="$PKI_PATH" EASYRSA_PASSIN="pass:${PASSIN}" EASYRSA_PASSOUT="pass:${PASSOUT}" $PKI_SCRIPT --batch --vars="${PKI_VARS}" $CMD
   fi
 }
 
@@ -164,7 +190,6 @@ then
   then
     echo 'Creating certificate'
     CHANGED=1
-    export EASYRSA_REQ_CN="$PKI_CERT_CN"
     pki_script "gen-req ${CERT_FILE_NAME}" '' "$PKI_PWD_CERT"
     echo 'Signing certificate'
     if [ -z "$PKI_CERT_SAN" ]
@@ -187,7 +212,7 @@ then
       then
         echo 'Exporting unencrypted key'
         # shellcheck disable=SC2002
-        pki_algo=$(cat "${PKI_PATH}/vars" | grep 'EASYRSA_ALGO' | cut -d ' ' -f 3)
+        pki_algo=$(cat "${PKI_VARS}" | grep 'EASYRSA_ALGO' | cut -d ' ' -f 3)
         openssl "$pki_algo" --passin="pass:${PKI_PWD_CERT}" -in "${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.key" -out "${PKI_PATH_PRIVATE}/${CERT_FILE_NAME}.unencrypted.key"
       fi
       for pn in "${PKCS_FORMATS[@]}"
