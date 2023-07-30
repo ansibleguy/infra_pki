@@ -57,7 +57,7 @@ defaults_vars:  # > pki_vars & > pki_vars_subca
   req_ou: ''
 
   key_size: 4096  # 1024, 2048, 4096, 8192
-  algo: 'ec'  # rsa, ec, ed; WARNING: ed not tested!
+  algo: 'ec'  # rsa, ec, ed; WARNING: ed not yet supported!
   digest: 'sha256'  # md5, sha1, sha256, sha224, sha384, sha512
   curve: 'secp384r1'  # used for 'ec' and 'ed' algos
 

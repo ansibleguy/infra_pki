@@ -47,7 +47,7 @@ PKI_HC:
 
   options:
     key_size: ['1024', '2048', '4096', '8192']
-    algo: ['rsa', 'ec', 'ed']
+    algo: ['rsa', 'ec']  # 'ed' has problems
     digest: ['md5', 'sha1', 'sha256', 'sha224', 'sha384', 'sha512']
     dn: ['org', 'cn_only']
 

@@ -18,6 +18,7 @@
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Setting CA-password to saved one"
   ansible.builtin.set_fact:
     pki_subca_pwd: "{{ pki_subca_pwd_file_txt.stdout }}"
+  no_log: true
   when:
     - PKI.save_passwords | bool
     - pki_subca_pwd_file.stat.exists
@@ -25,6 +26,7 @@
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Checking if SubCA-password was provided"
   ansible.builtin.set_fact:
     pki_subca_pwd: "{{ pki_cnf_subca.pwd_ca }}"
+  no_log: true
   when: pki_cnf_subca.pwd_ca | default(none, true) != none
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Prompting for SubCA-password"
@@ -38,6 +40,7 @@
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Setting CA-password to user-input"
   ansible.builtin.set_fact:
     pki_subca_pwd: "{{ hostvars['localhost'].pki_subca_pwd_raw.user_input }}"
+  no_log: true
   when: pki_subca_pwd is undefined
 
 - name: "{{ task_prefix_subca }} | PWD-SubCA | Checking that password meets the requirements"

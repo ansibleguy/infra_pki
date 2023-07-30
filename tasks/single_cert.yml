@@ -21,6 +21,7 @@
     pki_vars_param: "--vars={{ pki_path_subca }}/vars --batch"
     provided_pwd_cert: "{{ pki_cert_pwd | default(none, true) is not none }}"
     provided_pwd_subca: "{{ pki_subca_pwd | default(none, true) is not none }}"
+  no_log: true
 
 - name: "{{ task_prefix_cert }} | Validating input"
   ansible.builtin.assert:
@@ -51,6 +52,7 @@
     - name: "{{ task_prefix_cert }} | Setting CA-password to saved one"
       ansible.builtin.set_fact:
         pki_subca_pwd: "{{ pki_subca_pwd_file_txt.stdout }}"
+      no_log: true
 
 - name: "{{ task_prefix_cert }} | No or empty Sub-CA password"
   ansible.builtin.fail:

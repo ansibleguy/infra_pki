@@ -18,6 +18,7 @@
 - name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password to saved one"
   ansible.builtin.set_fact:
     pki_ca_pwd: "{{ pki_ca_pwd_file_txt.stdout }}"
+  no_log: true
   when:
     - PKI.save_passwords | bool
     - pki_ca_pwd_file.stat.exists
@@ -25,6 +26,7 @@
 - name: "{{ task_prefix_pki }} | PWD-CA | Checking if CA-password was provided"
   ansible.builtin.set_fact:
     pki_ca_pwd: "{{ pki_cnf.pwd_ca }}"
+  no_log: true
   when: pki_cnf.pwd_ca | default(none, true) != none
 
 - name: "{{ task_prefix_pki }} | PWD-CA | Prompting for CA-password"
@@ -38,6 +40,7 @@
 - name: "{{ task_prefix_pki }} | PWD-CA | Setting CA-password to user-input"
   ansible.builtin.set_fact:
     pki_ca_pwd: "{{ hostvars['localhost'].pki_ca_pwd_raw.user_input }}"
+  no_log: true
   when: pki_ca_pwd is undefined
 
 - name: "{{ task_prefix_pki }} | PWD-CA | Checking that password meets the requirements"
