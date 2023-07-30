@@ -1,10 +1,19 @@
 ---
 
+- name: PKI | Showing debug info - user provided config
+  ansible.builtin.debug:
+    var: pki
+  when: debug | bool
+
+- name: PKI | Showing debug info - running config
+  ansible.builtin.debug:
+    var: PKI
+  when: debug | bool
+
 - name: PKI | Checking config
   ansible.builtin.assert:
     that:
       - pki is defined
-      - PKI.instances is defined
       - PKI.instances | is_dict
       - PKI.instances | length > 0
       - not PKI.crl_distribution.enable | bool or PKI.crl_distribution.domain is defined

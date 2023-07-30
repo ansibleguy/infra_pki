@@ -1,5 +1,15 @@
 ---
 
+- name: "{{ task_prefix_pki }} | Showing debug info - user provided config"
+  ansible.builtin.debug:
+    var: pki_item.value
+  when: debug | bool
+
+- name: "{{ task_prefix_pki }} | Showing debug info - running config"
+  ansible.builtin.debug:
+    var: pki_cnf
+  when: debug | bool
+
 - name: "{{ task_prefix_pki }} | Checking config"
   ansible.builtin.assert:
     that:

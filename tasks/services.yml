@@ -39,6 +39,7 @@
   failed_when:
     - pki_backup_disable.failed
     - "'does not exist' not in pki_backup_disable.msg"
+    - "'Could not find' not in pki_backup_disable.msg"
 
 - name: PKI | Service | Backup | Installing requirements
   ansible.builtin.package:
@@ -76,3 +77,4 @@
   failed_when:
     - pki_crlupdater_disable.failed
     - "'does not exist' not in pki_crlupdater_disable.msg"
+    - "'Could not find' not in pki_crlupdater_disable.msg"

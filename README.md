@@ -151,6 +151,7 @@ There are also some useful **tags** available:
 
 To debug errors - you can set the 'debug' variable at runtime:
 ```bash
+# WARNING: Will log passwords!
 ansible-playbook -K -D -i inventory/hosts.yml playbook.yml -e debug=yes
 ```
 

@@ -13,6 +13,7 @@
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Getting CA password"
   ansible.builtin.include_tasks: instance/pwd_ca.yml
+  when: not pki_ca_pwd | default('') | meets_password_complexity(PKI_HC)
 
 - name: "{{ task_prefix_subca }} | Init-SubCA | Adding directory"
   ansible.builtin.file:
