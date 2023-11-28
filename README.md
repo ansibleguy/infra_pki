@@ -21,6 +21,10 @@ The [EasyRSA script](https://easy-rsa.readthedocs.io/en/latest/) is used as 'bac
 ## Install
 
 ```bash
+# latest
+ansible-galaxy role install git+https://github.com/ansibleguy/infra_pki
+
+# from galaxy
 ansible-galaxy install ansibleguy.infra_pki
 
 # or to custom role-path
