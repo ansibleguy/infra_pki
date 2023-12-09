@@ -14,7 +14,7 @@ The [EasyRSA script](https://easy-rsa.readthedocs.io/en/latest/) is used as 'bac
 [![Ansible-Lint Test Status](https://badges.ansibleguy.net/infra_pki.ansiblelint.svg)](https://github.com/ansibleguy/_meta_cicd/blob/latest/templates/usr/local/bin/cicd/ansiblelint.sh.j2)
 [![Ansible Galaxy](https://badges.ansibleguy.net/galaxy.badge.svg)](https://galaxy.ansible.com/ui/standalone/roles/ansibleguy/infra_pki)
 
-[Molecule Logs (if failed)](https://badges.ansibleguy.net/log/molecule_infra_pki_test.log)
+Molecule Logs: [Short](https://badges.ansibleguy.net/log/molecule_infra_pki_test_short.log), [Full](https://badges.ansibleguy.net/log/molecule_infra_pki_test.log)
 
 **Tested:**
 * Debian 11
