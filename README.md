@@ -84,6 +84,8 @@ ansible-galaxy install -r requirements.yml
 
 ## Usage
 
+You want a simple Ansible GUI? Check-out my [Ansible WebUI](https://github.com/ansibleguy/webui)
+
 ### Config
 
 Define the config as needed:
