@@ -10,13 +10,13 @@
     pki:
       save_passwords: true
       crl_distribution:
-        domain: 'crl.ansibleguy.net'
+        domain: 'crl.oxl.at'
 
       vars:
         req_country: 'AT'
         req_province: 'Styria'
         req_org: 'AnsibleGuy'
-        req_email: 'pki@ansibleguy.net'
+        req_email: 'pki@oxl.at'
         ca_expire: 9125  # 25 years
 
       backup:
@@ -43,15 +43,15 @@
 
               certs:
                 server:
-                  ansibleguy_net:
-                    cn: 'AnsibleGuy Website'
+                  oxl_at:
+                    cn: 'OXL Website'
                     export:
                       unencrypted: true
                       p12: true
                     san:
-                      dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                      dns: ['www.oxl.at', 'oxl.at']
                       ip: '135.181.170.217'
-                      uri: 'https://www.ansibleguy.net'
+                      uri: 'https://www.oxl.at'
 
                   test2:
                   # state: 'renewed'  # working on first run; but failing idempotence
@@ -64,12 +64,12 @@
 
                 email:
                   guy:
-                    cn: 'AnsibleGuy Mail'
+                    cn: 'OXL Mail'
                     san:
-                      email: 'guy@ansibleguy.net'
+                      email: 'contact@oxl.at'
                     req:
-                      org: 'AnsibleGuy Mailing'
-                      email: 'random@ansibleguy.net'
+                      org: 'OXL Mailing'
+                      email: 'random@oxl.at'
 
             sub2:
               pwd_ca: 'tEst543212'
@@ -96,7 +96,7 @@
                       pkcs12: true
 
                     san:
-                      dns: ['random.ansible.net']
+                      dns: ['random.oxl.at']
 
                 serverClient:
                   random2:
@@ -121,7 +121,7 @@
             sub1:
 
   roles:
-    - ansibleguy.infra_pki
+    - oxlorg.pki
 
 - name: Converge Single Certificate
   hosts: test-ag-infra_pki-1
@@ -135,7 +135,7 @@
     pki:
       save_passwords: true
       crl_distribution:
-        domain: 'crl.ansibleguy.net'
+        domain: 'crl.oxl.at'
 
       instances:
         test1:
@@ -172,7 +172,7 @@
   tasks:
     - name: PKI | Creating single certificate
       ansible.builtin.import_role:
-        name: ansibleguy.infra_pki
+        name: oxlorg.pki
         tasks_from: single_cert.yml
       vars:
         pki_cert_action: 'create'
@@ -180,7 +180,7 @@
 
     - name: PKI | Renewing single certificate
       ansible.builtin.import_role:
-        name: ansibleguy.infra_pki
+        name: oxlorg.pki
         tasks_from: single_cert.yml
       vars:
         pki_cert_action: 'renew'
@@ -189,7 +189,7 @@
 
     - name: PKI | Revoking single certificate
       ansible.builtin.import_role:
-        name: ansibleguy.infra_pki
+        name: oxlorg.pki
         tasks_from: single_cert.yml
       vars:
         pki_cert_action: 'revoke'
@@ -198,7 +198,7 @@
 
     - name: PKI | Renewing single certificate (does not yet exist)
       ansible.builtin.import_role:
-        name: ansibleguy.infra_pki
+        name: oxlorg.pki
         tasks_from: single_cert.yml
       vars:
         pki_cert_action: 'renew'
@@ -207,7 +207,7 @@
 
     - name: PKI | Creating single certificate (with debug)
       ansible.builtin.import_role:
-        name: ansibleguy.infra_pki
+        name: oxlorg.pki
         tasks_from: single_cert.yml
       vars:
         pki_cert_action: 'create'

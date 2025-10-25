@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# ansibleguy.infra_pki
+# oxlorg.pki
 # script for certificate expiration-checking - can be used by monitoring systems like Zabbix
 
 set -euo pipefail

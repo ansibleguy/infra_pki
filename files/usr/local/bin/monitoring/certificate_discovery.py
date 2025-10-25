@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# ansibleguy.infra_pki
+# oxlorg.pki
 # script for certificate discovery - can be used by monitoring systems like Zabbix
 
 from sys import argv as sys_argv

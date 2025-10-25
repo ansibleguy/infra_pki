@@ -2,7 +2,7 @@
 
 ## Config
 
-For all available options - see the [default-config located in the main defaults-file](https://github.com/ansibleguy/infra_pki/blob/latest/defaults/main/1_main.yml)!
+For all available options - see the [default-config located in the main defaults-file](https://github.com/O-X-L/ansible-role-pki/blob/latest/defaults/main/1_main.yml)!
 
 ```yaml
 pki:
@@ -11,13 +11,13 @@ pki:
   save_passwords: true  # save ca/sub-ca passwords to file (only root read-access)
 
   crl_distribution:
-    domain: 'crl.ansibleguy.net'  # domain that will be added to all certificates as CRL-distribution-point
+    domain: 'crl.oxl.at'  # domain that will be added to all certificates as CRL-distribution-point
 
   vars:
     req_country: 'AT'
     req_province: 'Styria'
     req_org: 'AnsibleGuy'
-    req_email: 'pki@ansibleguy.net'
+    req_email: 'pki@oxl.at'
     ca_expire: 9125  # 25 years
     # cert_expire: 5475  # 15 years; sub-ca runtime
 
@@ -57,17 +57,17 @@ pki:
 
           certs:
             server:  # server certificates
-              ansibleguy_net:
-                cn: 'AnsibleGuy Website'
+              oxl_at:
+                cn: 'OXL Website'
                 san:  # subject-alternative-names
-                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                  dns: ['www.oxl.at', 'oxl.at']
                   ip: '135.181.170.217'
-                  uri: 'https://www-ansibleguy.net'
+                  uri: 'https://www.oxl.at'
 
               tester:
-                cn: 'AnsibleGuy Test Server'
+                cn: 'OXL Test Server'
                 san:
-                  dns: 'test.ansibleguy.net'
+                  dns: 'test.oxl.at'
                 export:
                   unencrypted: true  # creates 'server_tester.unencrypted.key'
 
@@ -77,12 +77,12 @@ pki:
             email:  # mail certificates
               guy:
                 state: 'renewed'
-                cn: 'AnsibleGuy Mail'
+                cn: 'OXL Mail'
                 san:
-                  email: 'guy@ansibleguy.net'
+                  email: 'contact@oxl.at'
                 req:
-                  org: 'AnsibleGuy Mailing'
-                  email: 'random@ansibleguy.net'
+                  org: 'OXL Mailing'
+                  email: 'random@oxl.at'
 
             client:
               workstation1:
@@ -93,14 +93,14 @@ pki:
                 state: 'absent'
 
         vpn:
-          ca_cn: 'AnsibleGuy VPN SubCA'
+          ca_cn: 'OXL VPN SubCA'
           vars:
             cert_expire: 365
 
           certs:
             client:  # client certificates
               workstation1:
-                cn: 'AnsibleGuy Workstation 1'
+                cn: 'OXL Workstation 1'
 ```
 
 ----
@@ -171,8 +171,8 @@ root@test-ag-infrapki-1:/# ls -l /var/local/lib/pki/test_pki/subca_internal/issu
 > -rw-r----- 1 pki pki_read  944 Jul 21 08:29 client_wkst1.crt
 > -rw-r----- 1 pki pki_read 2807 Jul 21 08:29 email_guy.chain.crt
 > -rw-r----- 1 pki pki_read 1013 Jul 21 08:29 email_guy.crt
-> -rw-r----- 1 pki pki_read 2856 Jul 21 08:29 server_ansibleguynet.chain.crt
-> -rw-r----- 1 pki pki_read 1062 Jul 21 08:29 server_ansibleguynet.crt
+> -rw-r----- 1 pki pki_read 2856 Jul 21 08:29 server_oxlat.chain.crt
+> -rw-r----- 1 pki pki_read 1062 Jul 21 08:29 server_oxlat.crt
 > -rw-r----- 1 pki pki_read 2783 Jul 21 08:29 client_workstation1.chain.crt
 > -rw-r----- 1 pki pki_read  989 Jul 21 08:29 client_workstation1.crt
 > -rw-r----- 1 pki pki_read 2819 Jul 21 08:29 server_tester.chain.crt
@@ -185,8 +185,8 @@ root@test-ag-infrapki-1:/# ls -l /var/local/lib/pki/test_pki/subca_internal/priv
 > -rw-r----- 1 pki pki 1882 Jul 21 08:29 client_workstation1.p12
 > -rw-r----- 1 pki pki  452 Jul 21 08:29 email_guy.key
 > -rw-r----- 1 pki pki 1938 Jul 21 08:29 email_guy.p12
-> -rw-r----- 1 pki pki  452 Jul 21 08:29 server_ansibleguynet.key
-> -rw-r----- 1 pki pki 1970 Jul 21 08:29 server_ansibleguynet.p12
+> -rw-r----- 1 pki pki  452 Jul 21 08:29 server_oxlat.key
+> -rw-r----- 1 pki pki 1970 Jul 21 08:29 server_oxlat.p12
 > -rw-r----- 1 pki pki  452 Jul 21 08:29 server_tester.key
 > -rw-r----- 1 pki pki 1946 Jul 21 08:29 server_tester.p12
 > -rw-r----- 1 pki pki  288 Jul 21 08:29 server_tester.unencrypted.key
@@ -203,11 +203,11 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/ca/ca.crt -text
 >         Serial Number:
 >             55:ac:47:4a:9b:7c:7b:23:67:bf:96:cb:0f:c2:b3:01:b0:ba:57:ce
 >         Signature Algorithm: ecdsa-with-SHA512
->         Issuer: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = AnsibleGuy CA, emailAddress = pki@ansibleguy.net
+>         Issuer: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = AnsibleGuy CA, emailAddress = pki@oxl.at
 >         Validity
 >             Not Before: Jul 21 08:27:01 2023 GMT
 >             Not After : Jul 16 08:27:01 2043 GMT
->         Subject: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = AnsibleGuy CA, emailAddress = pki@ansibleguy.net
+>         Subject: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = AnsibleGuy CA, emailAddress = pki@oxl.at
 >         Subject Public Key Info:
 >             Public Key Algorithm: id-ecPublicKey
 >                 Public-Key: (384 bit)
@@ -222,7 +222,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/ca/ca.crt -text
 >                 2E:DC:27:F2:88:A9:A6:F4:2A:DB:53:42:44:E6:64:40:77:56:A8:78
 >             X509v3 Authority Key Identifier: 
 >                 keyid:2E:DC:27:F2:88:A9:A6:F4:2A:DB:53:42:44:E6:64:40:77:56:A8:78
->                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@ansibleguy.net/emailAddress=pki@ansibleguy.net
+>                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@oxl.at/emailAddress=pki@oxl.at
 >                 serial:55:AC:47:4A:9B:7C:7B:23:67:BF:96:CB:0F:C2:B3:01:B0:BA:57:CE
 > 
 >             X509v3 Key Usage: 
@@ -230,10 +230,10 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/ca/ca.crt -text
 >             X509v3 CRL Distribution Points: 
 > 
 >                 Full Name:
->                   URI:http://crl.ansibleguy.net/ca.crl
+>                   URI:http://crl.oxl.at/ca.crl
 > 
 >             Authority Information Access: 
->                 CA Issuers - URI:http://crl.ansibleguy.net/ca.crt
+>                 CA Issuers - URI:http://crl.oxl.at/ca.crt
 > 
 >     Signature Algorithm: ecdsa-with-SHA512
 >          ...
@@ -250,11 +250,11 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/ca.cr
 >         Serial Number:
 >             f7:47:59:8f:e3:fa:50:b6:d6:ca:95:cb:fa:e5:d0:cd
 >         Signature Algorithm: ecdsa-with-SHA256
->         Issuer: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = AnsibleGuy CA, emailAddress = pki@ansibleguy.net
+>         Issuer: C = AT, ST = Styria, O = Ultra Company, OU = IT, CN = AnsibleGuy CA, emailAddress = pki@oxl.at
 >         Validity
 >             Not Before: Jul 21 08:28:22 2023 GMT
 >             Not After : Jul 20 08:28:22 2026 GMT
->         Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@ansibleguy.net
+>         Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@oxl.at
 >         Subject Public Key Info:
 >             Public Key Algorithm: id-ecPublicKey
 >                 Public-Key: (384 bit)
@@ -266,10 +266,10 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/ca.cr
 >             X509v3 CRL Distribution Points: 
 > 
 >                 Full Name:
->                   URI:http://crl.ansibleguy.net/ca.crl
+>                   URI:http://crl.oxl.at/ca.crl
 > 
 >             Authority Information Access: 
->                 CA Issuers - URI:http://crl.ansibleguy.net/ca.crt
+>                 CA Issuers - URI:http://crl.oxl.at/ca.crt
 > 
 >             X509v3 Basic Constraints: 
 >                 CA:TRUE
@@ -277,7 +277,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/ca.cr
 >                 3C:1E:F4:65:1A:2C:73:DB:F0:FB:C2:0B:14:E9:13:C3:D5:32:70:60
 >             X509v3 Authority Key Identifier: 
 >                 keyid:2E:DC:27:F2:88:A9:A6:F4:2A:DB:53:42:44:E6:64:40:77:56:A8:78
->                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@ansibleguy.net/emailAddress=pki@ansibleguy.net
+>                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@oxl.at/emailAddress=pki@oxl.at
 >                 serial:55:AC:47:4A:9B:7C:7B:23:67:BF:96:CB:0F:C2:B3:01:B0:BA:57:CE
 > 
 >             X509v3 Key Usage: 
@@ -290,18 +290,18 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/ca.cr
 
 # SERVER CERTIFICATE
 
-guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issued/server_ansibleguynet.crt  -text
+guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issued/server_oxlat.crt  -text
 > Certificate:
 >     Data:
 >         Version: 3 (0x2)
 >         Serial Number:
 >             bd:c3:1f:f0:ee:ad:00:b6:86:7b:7d:dc:56:e2:33:55
 >         Signature Algorithm: ecdsa-with-SHA256
->         Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@ansibleguy.net
+>         Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@oxl.at
 >         Validity
 >             Not Before: Jul 21 08:29:01 2023 GMT
 >             Not After : Jul 20 08:29:01 2026 GMT
->         Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Website, emailAddress = pki@ansibleguy.net
+>         Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Website, emailAddress = pki@oxl.at
 >         Subject Public Key Info:
 >             Public Key Algorithm: id-ecPublicKey
 >                 Public-Key: (384 bit)
@@ -313,10 +313,10 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >             X509v3 CRL Distribution Points: 
 > 
 >                 Full Name:
->                   URI:http://crl.ansibleguy.net/subca_internal.crl
+>                   URI:http://crl.oxl.at/subca_internal.crl
 > 
 >             Authority Information Access: 
->                 CA Issuers - URI:http://crl.ansibleguy.net/subca_internal.crt
+>                 CA Issuers - URI:http://crl.oxl.at/subca_internal.crt
 > 
 >             X509v3 Basic Constraints: 
 >                 CA:FALSE
@@ -324,7 +324,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >                 9F:E1:5D:61:A7:65:18:9B:64:5B:69:59:F7:6F:90:90:91:F0:6F:D6
 >             X509v3 Authority Key Identifier: 
 >                 keyid:3C:1E:F4:65:1A:2C:73:DB:F0:FB:C2:0B:14:E9:13:C3:D5:32:70:60
->                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@ansibleguy.net/emailAddress=pki@ansibleguy.net
+>                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@oxl.at/emailAddress=pki@oxl.at
 >                 serial:F7:47:59:8F:E3:FA:50:B6:D6:CA:95:CB:FA:E5:D0:CD
 > 
 >             X509v3 Extended Key Usage: 
@@ -332,7 +332,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >             X509v3 Key Usage: 
 >                 Digital Signature, Key Encipherment
 >             X509v3 Subject Alternative Name: 
->                 DNS:www.ansibleguy.net, DNS:ansibleguy.net, IP Address:135.181.170.217, URI:https://www.ansibleguy.net
+>                 DNS:www.oxl.at, DNS:oxl.at, IP Address:135.181.170.217, URI:https://www.oxl.at
 >     Signature Algorithm: ecdsa-with-SHA256
 >          ...
 > -----BEGIN CERTIFICATE-----
@@ -341,7 +341,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 
 # SERVER CHAIN-CERTIFICATE
 
-guy@ansible:~# cat /var/local/lib/pki/test_pki/subca_internal/issued/server_ansibleguynet.chain.crt
+guy@ansible:~# cat /var/local/lib/pki/test_pki/subca_internal/issued/server_oxlat.chain.crt
 > -----BEGIN CERTIFICATE-----
 > ... (ROOT CA)
 > -----END CERTIFICATE-----
@@ -361,11 +361,11 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >         Serial Number:
 >             c6:d4:fc:17:e6:09:1b:8e:25:07:64:73:0b:0a:05:3b
 >         Signature Algorithm: ecdsa-with-SHA256
->         Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@ansibleguy.net
+>         Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@oxl.at
 >         Validity
 >             Not Before: Jul 21 08:29:10 2023 GMT
 >             Not After : Jul 20 08:29:10 2026 GMT
->         Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = Workstation 1, emailAddress = pki@ansibleguy.net
+>         Subject: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = Workstation 1, emailAddress = pki@oxl.at
 >         Subject Public Key Info:
 >             Public Key Algorithm: id-ecPublicKey
 >                 Public-Key: (384 bit)
@@ -377,10 +377,10 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >             X509v3 CRL Distribution Points: 
 > 
 >                 Full Name:
->                   URI:http://crl.ansibleguy.net/subca_internal.crl
+>                   URI:http://crl.oxl.at/subca_internal.crl
 > 
 >             Authority Information Access: 
->                 CA Issuers - URI:http://crl.ansibleguy.net/subca_internal.crt
+>                 CA Issuers - URI:http://crl.oxl.at/subca_internal.crt
 > 
 >             X509v3 Basic Constraints: 
 >                 CA:FALSE
@@ -388,7 +388,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >                 25:53:D5:C1:A5:0B:22:AC:D9:C7:20:C9:04:67:59:3F:18:39:40:E9
 >             X509v3 Authority Key Identifier: 
 >                 keyid:3C:1E:F4:65:1A:2C:73:DB:F0:FB:C2:0B:14:E9:13:C3:D5:32:70:60
->                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@ansibleguy.net
+>                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@oxl.at
 >                 serial:F7:47:59:8F:E3:FA:50:B6:D6:CA:95:CB:FA:E5:D0:CD
 > 
 >             X509v3 Extended Key Usage: 
@@ -410,11 +410,11 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >         Serial Number:
 >             f5:6f:9e:0d:d8:c1:e9:f2:a0:27:c4:f1:c6:2e:bc:31
 >         Signature Algorithm: ecdsa-with-SHA256
->         Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@ansibleguy.net
+>         Issuer: C = AT, ST = Styria, L = Graz, O = Internal Org, CN = AnsibleGuy Internal SubCA, emailAddress = pki@oxl.at
 >         Validity
 >             Not Before: Jul 21 08:29:18 2023 GMT
 >             Not After : Jul 20 08:29:18 2026 GMT
->         Subject: C = AT, ST = Styria, L = Graz, O = AnsibleGuy Mailing, CN = AnsibleGuy Mail, emailAddress = random@ansibleguy.net
+>         Subject: C = AT, ST = Styria, L = Graz, O = AnsibleGuy Mailing, CN = AnsibleGuy Mail, emailAddress = random@oxl.at
 >         Subject Public Key Info:
 >             Public Key Algorithm: id-ecPublicKey
 >                 Public-Key: (384 bit)
@@ -426,10 +426,10 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >             X509v3 CRL Distribution Points: 
 > 
 >                 Full Name:
->                   URI:http://crl.ansibleguy.net/subca_internal.crl
+>                   URI:http://crl.oxl.at/subca_internal.crl
 > 
 >             Authority Information Access: 
->                 CA Issuers - URI:http://crl.ansibleguy.net/subca_internal.crt
+>                 CA Issuers - URI:http://crl.oxl.at/subca_internal.crt
 > 
 >             X509v3 Basic Constraints: 
 >                 CA:FALSE
@@ -437,7 +437,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >                 3B:D7:5F:B2:DB:6D:7C:35:3E:A4:68:03:45:4A:E8:D6:28:F3:30:10
 >             X509v3 Authority Key Identifier: 
 >                 keyid:3C:1E:F4:65:1A:2C:73:DB:F0:FB:C2:0B:14:E9:13:C3:D5:32:70:60
->                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@ansibleguy.net
+>                 DirName:/C=AT/ST=Styria/O=Ultra Company/OU=IT/CN=AnsibleGuy CA/emailAddress=pki@oxl.at
 >                 serial:F7:47:59:8F:E3:FA:50:B6:D6:CA:95:CB:FA:E5:D0:CD
 > 
 >             X509v3 Extended Key Usage: 
@@ -445,7 +445,7 @@ guy@ansible:~# openssl x509 -in /var/local/lib/pki/test_pki/subca_internal/issue
 >             X509v3 Key Usage: 
 >                 Digital Signature, Non Repudiation, Key Encipherment
 >             X509v3 Subject Alternative Name: 
->                 email:guy@ansibleguy.net
+>                 email:contact@oxl.at
 >     Signature Algorithm: ecdsa-with-SHA256
 >          ...
 > -----BEGIN CERTIFICATE-----
@@ -461,7 +461,7 @@ guy@ansible:~# systemctl status pki-crl-updater.service
 >      Loaded: loaded (/etc/systemd/system/pki-crl-updater.service; static)
 >      Active: inactive (dead) since Fri 2023-07-21 09:03:33 UTC; 2s ago
 > TriggeredBy: * pki-crl-updater.timer
->        Docs: https://github.com/ansibleguy/infra_pki
+>        Docs: https://github.com/O-X-L/ansible-role-pki
 >     Process: 12487 ExecStart=/bin/bash /usr/local/sbin/pki_crl_update.sh (code=exited, status=0/SUCCESS)
 >    Main PID: 12487 (code=exited, status=0/SUCCESS)
 >         CPU: 218ms
@@ -482,7 +482,7 @@ guy@ansible:~# systemctl status backup-pki.service
 >      Loaded: loaded (/etc/systemd/system/backup-pki.service; static)
 >      Active: inactive (dead) since Fri 2023-07-21 09:12:10 UTC; 41s ago
 > TriggeredBy: * backup-pki.timer
->        Docs: https://github.com/ansibleguy/infra_pki
+>        Docs: https://github.com/O-X-L/ansible-role-pki
 >     Process: 12850 ExecStart=/bin/bash -c tar cJf "/var/backups/pki/$$(date +'%Y-%m-%d_%H-%M-%S').tar.xz" /var/local/lib/pki (code=exited, status=0/SUCCESS)
 >     Process: 12854 ExecStop=/bin/bash -c chmod 600 /var/backups/pki/*.tar.xz (code=exited, status=0/SUCCESS)
 >    Main PID: 12850 (code=exited, status=0/SUCCESS)

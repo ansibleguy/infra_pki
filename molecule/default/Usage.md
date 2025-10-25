@@ -5,6 +5,6 @@ Check out the [Molecule Tutorial](https://github.com/ansibleguy/ansible_tutorial
 # Running
 
 ```bash
-cd roles/ansibleguy.infra_pki
+cd roles/oxlorg.pki
 molecule test
 ```

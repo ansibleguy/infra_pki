@@ -68,5 +68,5 @@
   tasks:
     - name: PKI | Managing single certificate
       ansible.builtin.import_role:
-        name: ansibleguy.infra_pki
+        name: oxlorg.pki
         tasks_from: single_cert.yml

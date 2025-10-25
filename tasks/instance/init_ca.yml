@@ -7,7 +7,7 @@
   ansible.builtin.user:
     name: "{{ pki_cnf.owner }}"
     shell: '/bin/bash'
-    comment: 'ansibleguy.infra_pki - owner of CA/PKI'
+    comment: 'oxlorg.pki - owner of CA/PKI'
     state: present
   when: PKI.manage.users | bool
 

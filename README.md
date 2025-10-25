@@ -1,5 +1,5 @@
 <a href="https://en.wikipedia.org/wiki/Public_key_infrastructure">
-  <img src="https://github.com/ansibleguy/infra_pki/blob/latest/docs/pki.svg" alt="Public Key Infrastructure" width="600"/>
+  <img src="https://github.com/O-X-L/ansible-role-pki/blob/latest/docs/pki.svg" alt="Public Key Infrastructure" width="600"/>
 </a>
 
 # Ansible Role - Public Key Infrastructure (PKI)
@@ -8,16 +8,16 @@ Role to provision and manage one or multiple [PKI's](https://en.wikipedia.org/wi
 
 The [EasyRSA script](https://easy-rsa.readthedocs.io/en/latest/) is used as 'backend' to simplify the automation process.
 
-[![Lint](https://github.com/ansibleguy/infra_pki/actions/workflows/lint.yml/badge.svg)](https://github.com/ansibleguy/infra_pki/actions/workflows/lint.yml)
-[![Ansible Galaxy](https://badges.ansibleguy.net/galaxy.badge.svg)](https://galaxy.ansible.com/ui/standalone/roles/ansibleguy/infra_pki)
+[![Lint](https://github.com/O-X-L/ansible-role-pki/actions/workflows/lint.yml/badge.svg)](https://github.com/O-X-L/ansible-role-pki/actions/workflows/lint.yml)
+[![Ansible Galaxy](https://badges.oss.oxl.app/galaxy.badge.svg)](https://galaxy.ansible.com/ui/standalone/roles/oxlorg/pki)
 
 **Molecule Integration-Tests**:
 
-* Status: [![Molecule Test Status](https://badges.ansibleguy.net/infra_pki.molecule.svg)](https://github.com/ansibleguy/_meta_cicd/blob/latest/templates/usr/local/bin/cicd/molecule.sh.j2) |
-[![Functional-Tests](https://github.com/ansibleguy/infra_pki/actions/workflows/integration_test_result.yml/badge.svg)](https://github.com/ansibleguy/infra_pki/actions/workflows/integration_test_result.yml)
-* Logs: [API](https://ci.ansibleguy.net/api/job/ansible-test-molecule-infra_pki/logs?token=2b7bba30-9a37-4b57-be8a-99e23016ce70&lines=1000) | [Short](https://badges.ansibleguy.net/log/molecule_infra_pki_test_short.log) | [Full](https://badges.ansibleguy.net/log/molecule_infra_pki_test.log)
+* Status: [![Molecule Test Status](https://badges.oss.oxl.app/infra_pki.molecule.svg)](https://github.com/O-X-L/ansible-role-oxl-cicd/blob/latest/templates/usr/local/bin/cicd/molecule.sh.j2) |
+[![Functional-Tests](https://github.com/O-X-L/ansible-role-pki/actions/workflows/integration_test_result.yml/badge.svg)](https://github.com/O-X-L/ansible-role-pki/actions/workflows/integration_test_result.yml)
+* Logs: [API](https://ci.oss.oxl.app/api/job/ansible-test-molecule-infra_pki/logs?token=2b7bba30-9a37-4b57-be8a-99e23016ce70&lines=1000) | [Short](https://badges.oss.oxl.app/log/molecule_infra_pki_test_short.log) | [Full](https://badges.oss.oxl.app/log/molecule_infra_pki_test.log)
 
-Internal CI: [Tester Role](https://github.com/ansibleguy/_meta_cicd) | [Jobs API](https://github.com/O-X-L/github-self-hosted-jobs-systemd)
+Internal CI: [Tester Role](https://github.com/O-X-L/ansible-role-oxl-cicd) | [Jobs API](https://github.com/O-X-L/github-self-hosted-jobs-systemd)
 
 **Tested:**
 * Debian 11
@@ -29,13 +29,13 @@ Internal CI: [Tester Role](https://github.com/ansibleguy/_meta_cicd) | [Jobs API
 
 ```bash
 # latest
-ansible-galaxy role install git+https://github.com/ansibleguy/infra_pki
+ansible-galaxy role install git+https://github.com/O-X-L/ansible-role-pki
 
 # from galaxy
-ansible-galaxy install ansibleguy.infra_pki
+ansible-galaxy install oxlorg.pki
 
 # or to custom role-path
-ansible-galaxy install ansibleguy.infra_pki --roles-path ./roles
+ansible-galaxy install oxlorg.pki --roles-path ./roles
 
 # install dependencies
 ansible-galaxy install -r requirements.yml
@@ -57,7 +57,7 @@ ansible-galaxy install -r requirements.yml
 
 * You want a simple **Ansible GUI**?
 
-  Check-out this [Ansible WebUI](https://github.com/ansibleguy/webui)
+  Check-out this [Ansible WebUI](https://github.com/O-X-L/ansible-webui)
 
 ----
 
@@ -69,14 +69,14 @@ Define the config as needed:
 
 ### Example
 
-You can find a more detailed example here: [Example](https://github.com/ansibleguy/infra_pki/blob/latest/Example.md)
+You can find a more detailed example here: [Example](https://github.com/O-X-L/ansible-role-pki/blob/latest/Example.md)
 
 #### Minimal setup
 
 ```yaml
 pki:
   crl_distribution:
-    domain: 'crl.ansibleguy.net'
+    domain: 'crl.oxl.at'
 
   instances:
     root:
@@ -92,16 +92,16 @@ pki:
 
           certs:
             server:  # server certificates
-              ansibleguy_net:
-                cn: 'AnsibleGuy Website'
+              oxl_at:
+                cn: 'OXL Website'
                 san:
-                  dns: ['www.ansibleguy.net', 'ansibleguy.net']
+                  dns: ['www.oxl.at', 'oxl.at']
                   ip: '135.181.170.217'
-                  uri: 'https://www-ansibleguy.net'
+                  uri: 'https://www.oxl.at'
 
             client:  # client certificates
               workstation1:
-                cn: 'AnsibleGuy Workstation'
+                cn: 'OXL Workstation'
 ```
 
 
@@ -193,14 +193,14 @@ Note: `--check` mode is not supported by this role as it heavily depends on scri
 
 * **Note:** Most of the role's functionality can be opted in or out.
 
-  For all available options - see the [default-config located in the main defaults-file](https://github.com/ansibleguy/infra_pki/blob/latest/defaults/main/1_main.yml)!
+  For all available options - see the [default-config located in the main defaults-file](https://github.com/O-X-L/ansible-role-pki/blob/latest/defaults/main/1_main.yml)!
 
 
 * **Info:** To make sure the role config 'behaves' as expected - it tested by this role using molecule!
 
   Per example: The certificate-attributes, file- & directory-permissions & -ownership are checked after generating multiple certificates using multiple Root- & Sub-CA's.
 
-  See [Verification Tests](https://github.com/ansibleguy/infra_pki/blob/latest/molecule/default/verify.yml)
+  See [Verification Tests](https://github.com/O-X-L/ansible-role-pki/blob/latest/molecule/default/verify.yml)
 
 
 * **Warning:** Not every setting/variable you provide will be checked for validity. Bad config might break the role!
@@ -241,7 +241,7 @@ Note: `--check` mode is not supported by this role as it heavily depends on scri
   * specific config on instance/subca level will always override the inherited one
 
 
-* **Note:** You can find scripts for automated certificate-expiration monitoring that can be integrated with monitoring systems like [Zabbix](https://www.zabbix.com/documentation/current/en/manual/discovery/low_level_discovery) at [files/usr/local/bin/monitoring](https://github.com/ansibleguy/infra_pki/tree/latest/files/usr/local/bin/monitoring).
+* **Note:** You can find scripts for automated certificate-expiration monitoring that can be integrated with monitoring systems like [Zabbix](https://www.zabbix.com/documentation/current/en/manual/discovery/low_level_discovery) at [files/usr/local/bin/monitoring](https://github.com/O-X-L/ansible-role-pki/tree/latest/files/usr/local/bin/monitoring).
 
 
 * **Warning:** The CRL-Distribution settings **CANNOT BE CHANGED** easily.
